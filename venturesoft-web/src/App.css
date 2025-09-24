@@ -1,0 +1,536 @@
+/* Toast notification */
+.toast {
+  position: fixed;
+  right: 16px;
+  bottom: 80px; /* above back-to-top */
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1600;
+}
+
+.toast .toast-content { display: flex; align-items: center; }
+
+.toast .toast-close {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* Toast color variants */
+.toast--error { background: #b91c1c; }
+.toast--success { background: #166534; }
+.toast--info { background: #1d4ed8; }
+.toast--warning { background: #b45309; }
+/* Back to top button */
+.back-to-top {
+  position: fixed;
+  right: 16px;
+  bottom: 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  border: none;
+  background: #1e3a8a;
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 180ms ease;
+  z-index: 1500;
+}
+
+.back-to-top.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.back-to-top:hover {
+  background: #2846b9;
+}
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.18), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5; /* neutral background */
+  font-family: Arial, sans-serif;
+  font-size: 14px; /* normalized base size */
+}
+
+.app-container {
+  display: grid;
+  grid-template-areas:
+    "left center right";
+  grid-template-columns: 200px 1fr 200px; /* left | center | right */
+  grid-template-rows: auto; /* allow content to define height */
+  min-height: 100vh; /* page can grow and scroll */
+  width: 100vw;
+  gap: 15px;
+  padding: 96px 12px 20px; /* top padding to clear fixed header */
+  box-sizing: border-box;
+}
+
+/* Header fixed on top */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+.header-info {
+  display: flex;
+  gap: 20px; /* spacing between location, date, time */
+  font-size: 14px;
+  margin-right: 10px;
+  padding-right: 5%;
+  color: #1f2937; /* dark slate for readability on white background */
+  align-items: center; /* vertically center items */
+  flex-wrap: wrap; /* prevent overflow on small screens */
+  font-weight: 500; /* slightly bolder for emphasis */
+}
+
+/* Make each info item look like a pill badge */
+.header-info span {
+  background-color: #f3f4f6; /* light gray pill */
+  border: 1px solid #e5e7eb; /* subtle border */
+  color: #111827; /* strong readable text */
+  padding: 6px 10px;
+  border-radius: 9999px; /* full pill */
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.header-info span:hover {
+  background-color: #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+/* Make time align nicely */
+.header-info span:last-child {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Footer at bottom */
+.footer {
+  grid-column: 1 / -1;        /* span across all grid columns */
+  text-align: center;
+  padding: 6px 10px; /* smaller footer */
+  background: linear-gradient(180deg, #e0f2fe 0%, #c5e6f8 100%); /* light sky blue */
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.08);
+  z-index: 1000;
+
+  /* scrollable footer in normal flow */
+  position: relative;
+  bottom: auto;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+/* Inner footer content layout */
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px; /* tighter to keep footer small */
+}
+
+.footer-logo {
+  height: 22px; /* smaller logo */
+  width: auto;
+  object-fit: contain;
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.92); /* light badge behind logo */
+  padding: 4px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+  border: 1px solid rgba(255,255,255,0.55);
+}
+
+/* Footer description text */
+.footer-desc {
+  margin: 0;               /* keep compact */
+  font-size: 12px;         /* compact text */
+  line-height: 1.25;       /* tight but readable */
+  color: #374151;          /* dark neutral on light */
+  max-width: 900px;        /* avoid super long lines */
+  text-align: center;      /* center under logo */
+}
+
+/* Tighten footer text spacing */
+.footer-content p,
+.footer-content a {
+  margin: 0;
+  line-height: 1.2;
+  font-size: 12px;
+  color: #1f2937; /* dark text on light */
+}
+
+/* Footer contacts row */
+.footer-contacts {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-contacts a {
+  color: #1e3a8a; /* brand indigo on light */
+  text-decoration: none;
+}
+
+.footer-contacts a:hover {
+  text-decoration: underline;
+  color: #2846b9; /* slightly brighter on hover */
+}
+
+.contact-sep {
+  color: #6b7280; /* muted separator on light */
+  padding: 0 2px;
+}
+
+/* Offices block */
+.footer-offices {
+  display: grid;
+  grid-template-columns: 1fr; /* stacks on mobile */
+  gap: 6px;
+  width: 100%;
+  max-width: 1000px;
+  margin-top: 6px;
+}
+
+.office-item {
+  background: rgba(30, 58, 138, 0.06); /* indigo tint on light blue */
+  border: 1px solid rgba(30, 58, 138, 0.15);
+  border-radius: 10px;
+  padding: 6px 8px;
+  color: #1f2937;
+}
+
+.office-item strong {
+  display: block;
+  color: #1e3a8a;
+  margin-bottom: 4px;
+}
+
+.office-item span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.25;
+  color: #374151;
+}
+
+.office-item a {
+  color: #1e3a8a;
+  text-decoration: none;
+  font-size: 11px;
+}
+
+.office-item a:hover {
+  text-decoration: underline;
+}
+
+.left-panel {
+  grid-area: left;
+  padding: 15px;
+  background-color: #ed2124;
+  border-radius: 10px;
+  box-shadow: none;
+  color: #ffffff; /* white text for good contrast with red background */
+  text-transform: uppercase; /* make text capital */
+  overflow: visible; /* let page handle scrolling */
+}
+
+.nav-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.15); /* subtle hover effect */
+  transform: translateY(-1px);
+}
+
+.nav-item .nav-icon { 
+  margin-right: 8px; 
+  display: inline-flex; 
+}
+
+.nav-item .nav-text { 
+  line-height: 1; 
+}
+
+.center-panel {
+  grid-area: center;
+  padding: 10px;
+  margin-top: 8px; /* visual separation from header */
+  background-color: #121c68; /* dark blue */
+  color: #f0f4ff; /* light text for strong contrast on dark background */
+  border-radius: 10px;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* space between items */
+  overflow-y: auto; /* center panel scrolls */
+  max-height: calc(100vh - 96px - 20px); /* viewport minus top/bottom padding */
+  overscroll-behavior: contain;
+}
+
+/* Ensure links in center panel are readable on dark background */
+.center-panel a {
+  color: #ffeb3b; /* high-contrast link color */
+}
+
+/* Center panel typography tweaks */
+.center-panel h2 {
+  margin: 0 0 6px;
+  font-size: 22px; /* clearer section heading */
+  font-weight: 700;
+}
+
+.center-panel h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.center-panel p {
+  margin: 6px 0 8px;
+  color: #dbe4ff; /* softer paragraph color */
+}
+
+.center-panel small {
+  color: #b7c3ff; /* subtle meta text */
+}
+
+/* Blog card styles */
+.blog-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 16px 18px;
+  min-height: 140px; /* increased height for better presence */
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.blog-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.blog-card:active {
+  transform: scale(0.98);
+}
+
+.blog-card a {
+  color: #ffeb3b;
+  text-decoration: none;
+}
+
+.blog-card a:hover {
+  text-decoration: underline;
+}
+
+.right-panel {
+  grid-area: right;
+  padding: 10px;
+  background-color: #c5e6f8; /* lavender */
+  border-radius: 10px;
+  box-shadow:none;
+  overflow: visible; /* let page handle scrolling */
+}
+
+/* Center the right panel header */
+.right-panel h3 {
+  text-align: center;
+  margin-top: 0;
+}
+
+/* Right panel: policy list styles */
+.policy-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.policy-item {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0,0,0,0.06);
+  color: #0f172a;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+  user-select: none;
+}
+
+.policy-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  background: #ffffff;
+}
+
+.policy-item:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Right panel: selected policy details */
+.policy-detail {
+  margin-top: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.policy-detail h4 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+}
+
+.policy-detail p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.policy-pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e2e8f0;
+}
+
+/* Left panel content */
+.left-panel h3 {
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  color: inherit; /* inherit white color from parent */
+  transition: color 0.3s ease; /* smooth transition for hover */
+}
+
+.left-panel h3:hover {
+  color: #ffeb3b; /* bright yellow highlight on hover */
+}
+
+.nav-item {
+  padding: 5px 8px;
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: inherit; /* inherit white color from parent */
+  transition: all 0.3s ease; /* smooth transition for hover */
+  border-radius: 5px; /* rounded corners for hover effect */
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.2); /* semi-transparent white background on hover */
+  color: #ffeb3b; /* bright yellow text on hover */
+  transform: translateX(5px); /* slight slide effect */
+}
+
+.nav-item a {
+  color: inherit; /* inherit color from parent nav-item */
+  text-decoration: none; /* remove default underline */
+}
+
+.nav-item a:hover {
+  text-decoration: underline;
+  color: inherit; /* inherit hover color from parent nav-item */
+}
+
+/* Modal overlay and card for zoom/pop effect */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 160ms ease-out;
+}
+
+.modal-card {
+  background: #0f172a; /* deep slate to match theme */
+  color: #e2e8f0;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  width: min(720px, 92vw);
+  max-height: 82vh;
+  overflow: auto;
+  padding: 22px 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  transform-origin: center;
+  animation: modalPopIn 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: #e2e8f0;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: #ffeb3b;
+}
+
+@keyframes modalPopIn {
+  0% { transform: scale(0.96); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
