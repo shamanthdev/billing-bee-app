@@ -1,30 +1,118 @@
 name: Build WF
+
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
+  schedule:
+    - cron: "10 * * * *"
+
+env:
+  ECR_REGISTRY: 'vprofileapp-img'
+  
+
+permissions:
+  contents: read
 
 jobs:
   Build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
 
       - name: Maven Build
         run: mvn clean install
 
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-jar
+          path: target/*.jar
+
+      - name: Notify build success
+        if: success()
+        run: echo "✅ Build successful!"
+
+      - name: Notify build failure
+        if: failure()
+        run: echo "❌ Build failed!"
+
   Testing:
     runs-on: ubuntu-latest
-    # mentioning the previous job name to run before testing
     needs: Build
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
-      - name: RUn tests on main branch
+      - name: Download build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: build-jar
+      - name: Run tests on main branch
         run: mvn test
-      
-      - name: Chekstyle
+      - name: Checkstyle
         run: mvn checkstyle:checkstyle
-        
+
+  Security_Scans:
+    runs-on: ubuntu-latest
+    needs: Build
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Trivy file scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: json
+          exit-code: 0
+          vuln-type: os,library
+          output: trivy-report.json
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-report
+          path: trivy-report.json
+
+  BUILD_AND_PUBLISH:
+    name: BUILD_AND_PUBLISH
+    runs-on: ubuntu-latest
+    needs: [Build, Testing, Security_Scans]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: my-app-repo
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f Docker-files/app/multistage/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          
