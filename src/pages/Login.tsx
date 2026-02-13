@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -6,6 +7,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+  
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,13 +21,15 @@ const Login = () => {
 
     setError("");
     setLoading(true);
-
+  
     // Simulate API call
     setTimeout(() => {
       setLoading(false);
+    navigate("/");
       console.log("Login payload:", { email, password });
     }, 1500);
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -102,6 +107,7 @@ const Login = () => {
                   ? "bg-yellow-300 cursor-not-allowed"
                   : "bg-yellow-400 hover:bg-yellow-500 text-gray-900"
               }`}
+            onClick={handleSubmit}
           >
             {loading ? "Logging in..." : "Login"}
           </button>
