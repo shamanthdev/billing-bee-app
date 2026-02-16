@@ -37,12 +37,32 @@ export const createBill = async (payload) => {
   return response.data; // billId
 };
 
-export const getBills = async () => {
-  const response = await api.get("/bills");
-  return response.data;
+export const getBills = async ({ page = 0, size = 10, search = "" }) => {
+  const res = await api.get("/bills/list", {
+    params: {
+      page,
+      size,
+      search,
+    },
+  });
+
+  return res.data;
 };
 
 export const getBillDetails = async (id) => {
   const response = await api.get(`/bills/details/${id}`);
+  return response.data;
+};
+
+export const downloadBillPdf = async (billId) => {
+  const response = await api.get(`/bills/${billId}/pdf`, {
+    responseType: "blob", // IMPORTANT
+  });
+
+  return response.data;
+};
+
+export const getBillById = async (id) => {
+  const response = await api.get(`/bills/${id}`);
   return response.data;
 };

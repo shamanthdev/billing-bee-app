@@ -35,11 +35,12 @@ const isActive = location.pathname.startsWith(path);
       <nav className="flex-1 px-4">
         <div className="mt-4 space-y-2 text-sm">
           {menuItem("Dashboard", "/dashboard")}
-          {menuItem("Products", "/products")}
+          {menuItem("Inventory", "/products")}
           {menuItem("Sales", "/sales")}
-          {menuItem("Inventory", "/inventory")}
+          {/* {menuItem("Inventory", "/inventory")} */}
           {menuItem("Customers", "/customers")}
           {menuItem("Reports", "/reports")}
+          {menuItem("Payments", "/payments")}
           {menuItem("Logout", "/login")}
         </div>
       </nav>

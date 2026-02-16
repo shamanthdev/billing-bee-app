@@ -18,7 +18,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<Products />} />
-          {/* <Route path="/createbill" element={<CreateBill />} /> */}
+
           <Route path="/sales" element={<Bills />} />
           <Route path="/sales/create" element={<CreateBill />} />
           <Route path="/sales/:id" element={<BillDetails />} />
@@ -26,7 +26,7 @@ function App() {
         </Route>
 
         {/* Standalone pages */}
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
       </Routes>
     </BrowserRouter>
   );

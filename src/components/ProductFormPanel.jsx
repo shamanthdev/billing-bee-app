@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { createProduct, updateProduct } from "../services/ProductService";
 
 export default function ProductFormPanel({
@@ -9,233 +10,223 @@ export default function ProductFormPanel({
 }) {
   const isEdit = Boolean(product);
 
+  const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState({
     name: "",
     sellingPrice: "",
+    costPrice: "",
     stockQuantity: "",
+    gstPercent: "18",
+    hsnCode: "",
+    expiryDate: "",
   });
 
-  const panelRef = useRef(null);
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (open && panelRef.current) {
-      const firstInput = panelRef.current.querySelector(
-        "input, button, select, textarea",
-      );
-      firstInput?.focus();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !panelRef.current) return;
-
-    const focusableSelectors =
-      "a[href], button:not([disabled]), textarea, input, select";
-
-    const focusableElements =
-      panelRef.current.querySelectorAll(focusableSelectors);
-
-    if (focusableElements.length === 0) return;
-
-    const firstEl = focusableElements[0];
-    const lastEl = focusableElements[focusableElements.length - 1];
-
-    const handleTabKey = (e) => {
-      if (e.key !== "Tab") return;
-
-      if (e.shiftKey) {
-        // Shift + Tab
-        if (document.activeElement === firstEl) {
-          e.preventDefault();
-          lastEl.focus();
-        }
-      } else {
-        // Tab
-        if (document.activeElement === lastEl) {
-          e.preventDefault();
-          firstEl.focus();
-        }
-      }
-    };
-
-    document.addEventListener("keydown", handleTabKey);
-
-    return () => {
-      document.removeEventListener("keydown", handleTabKey);
-    };
-  }, [open]);
-
-  /* 🔹 Handle slide-in animation */
-  useEffect(() => {
-    if (open) {
-      setVisible(true);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        if (showConfirm) {
-          setShowConfirm(false); // close confirm first
-        } else {
-          handleClose(); // close panel
-        }
-      }
-    };
-
-    if (open) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open, showConfirm]);
-
-  /* 🔹 Prefill form on edit */
+  /* ---------------- Populate form on edit ---------------- */
   useEffect(() => {
     if (product) {
       setForm({
-        name: product.name ?? "",
-        sellingPrice: product.sellingPrice ?? "",
-        stockQuantity: product.stockQuantity ?? "",
+        name: product.name || "",
+        sellingPrice: product.sellingPrice || "",
+        costPrice: product.costPrice || "",
+        stockQuantity: product.stockQuantity || "",
+        gstPercent: product.taxPercent ?? "18",
+        hsnCode: product.hsnCode || "",
+        expiryDate: product.expiryDate || "",
       });
-    } else {
-      setForm({ name: "", sellingPrice: "", stockQuantity: "" });
     }
-    setErrors({});
-  }, [product, open]);
+  }, [product]);
+
+  /* ---------------- Change handler ---------------- */
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  /* ---------------- Submit ---------------- */
+  const handleSubmit = async () => {
+    const {
+      name,
+      sellingPrice,
+      costPrice,
+      stockQuantity,
+      gstPercent,
+      hsnCode,
+    } = form;
+
+    if (
+      !name ||
+      !sellingPrice ||
+      !costPrice ||
+      !stockQuantity ||
+      !gstPercent ||
+      !hsnCode
+    ) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    const payload = {
+      name,
+      sellingPrice: Number(sellingPrice),
+      costPrice: Number(costPrice),
+      stockQuantity: Number(stockQuantity),
+      taxPercent: Number(gstPercent),
+      hsnCode,
+      expiryDate: form.expiryDate || null,
+    };
+
+    try {
+      setLoading(true);
+      isEdit ? await updateProduct(product.id, payload)
+             : await createProduct(payload);
+
+      toast.success(
+        isEdit ? "Product updated successfully" : "Product added successfully"
+      );
+
+      onSuccess();
+      onClose();
+    } catch (err) {
+      toast.error("Failed to save product");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!open) return null;
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = () => {
-    if (isEdit) {
-      setShowConfirm(true);
-    } else {
-      submitForm();
-    }
-  };
-
-  const submitForm = async () => {
-    setLoading(true);
-    setErrors({});
-
-    try {
-      const payload = {
-        name: form.name,
-        sellingPrice: Number(form.sellingPrice),
-        stockQuantity: Number(form.stockQuantity),
-      };
-
-      if (isEdit) {
-        await updateProduct(product.id, payload);
-      } else {
-        await createProduct(payload);
-      }
-
-      onSuccess();
-      handleClose();
-    } catch (err) {
-      if (err.response?.status === 400) {
-        setErrors(err.response.data.errors || {});
-      } else {
-        alert("Something went wrong");
-      }
-    } finally {
-      setLoading(false);
-      setShowConfirm(false);
-    }
-  };
-
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(onClose, 300);
-  };
-
   return (
     <>
-      {/* BACKDROP */}
+      {/* Backdrop */}
       <div
-        onClick={handleClose}
-        className="fixed inset-0 bg-black/40 z-40 transition-opacity duration-700"
+        onClick={onClose}
+        className="fixed inset-0 bg-black/40 z-40"
       />
 
-      {/* SIDE PANEL */}
-      <div
-        ref={panelRef}
-        className={`
-          fixed top-0 right-0 h-full w-[420px] bg-white z-50
-          shadow-xl flex flex-col
-          transform transition-transform duration-700 ease-in-out
-          ${visible ? "translate-x-0" : "translate-x-full"}
-        `}
-      >
-        {/* HEADER */}
+      {/* Side Panel */}
+      <div className="fixed top-0 right-0 h-full w-[420px] bg-white z-50 shadow-lg flex flex-col">
+        {/* Header */}
         <div className="px-6 py-4 border-b">
-          <h3 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold">
             {isEdit ? "Edit Product" : "Add Product"}
-          </h3>
+          </h2>
         </div>
 
-        {/* FORM BODY */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+        {/* Body */}
+        <div className="flex-1 overflow-auto px-6 py-4 space-y-4 text-sm">
+
+          {/* Product Name */}
           <div>
-            <label className="block text-sm font-medium">Name *</label>
+            <label className="block mb-1 font-medium">
+              Name <span className="text-red-500">*</span>
+            </label>
             <input
               name="name"
               value={form.name}
               onChange={handleChange}
-              className="w-full border rounded p-2"
+              className="w-full border rounded px-3 py-2"
             />
-            {errors.name && (
-              <p className="text-red-500 text-sm">{errors.name}</p>
-            )}
           </div>
 
+          {/* HSN Code */}
           <div>
-            <label className="block text-sm font-medium">Selling Price *</label>
-            <input
-              type="number"
-              name="sellingPrice"
-              value={form.sellingPrice}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-            {errors.sellingPrice && (
-              <p className="text-red-500 text-sm">{errors.sellingPrice}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">
-              Stock Quantity *
+            <label className="block mb-1 font-medium">
+              HSN Code <span className="text-red-500">*</span>
             </label>
             <input
-              type="number"
-              name="stockQuantity"
-              value={form.stockQuantity}
+              name="hsnCode"
+              value={form.hsnCode}
               onChange={handleChange}
-              className="w-full border rounded p-2"
+              className="w-full border rounded px-3 py-2"
             />
-            {errors.stockQuantity && (
-              <p className="text-red-500 text-sm">{errors.stockQuantity}</p>
-            )}
+          </div>
+
+          {/* Pricing */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block mb-1 font-medium">
+                Cost Price <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                name="costPrice"
+                value={form.costPrice}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium">
+                Selling Price <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                name="sellingPrice"
+                value={form.sellingPrice}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
+          </div>
+
+          {/* GST + Stock */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block mb-1 font-medium">
+                GST % <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="gstPercent"
+                value={form.gstPercent}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="0">0%</option>
+                <option value="5">5%</option>
+                <option value="12">12%</option>
+                <option value="18">18%</option>
+                <option value="28">28%</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium">
+                Stock Qty <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                name="stockQuantity"
+                value={form.stockQuantity}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
+          </div>
+
+          {/* Expiry Date */}
+          <div>
+            <label className="block mb-1 font-medium">Expiry Date</label>
+            <input
+              type="date"
+              name="expiryDate"
+              value={form.expiryDate || ""}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2"
+            />
           </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="px-6 py-4 border-t bg-white flex justify-end gap-3">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t flex justify-end gap-3">
           <button
-            onClick={handleClose}
-            className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100"
+            onClick={onClose}
+            className="px-4 py-2 border rounded"
           >
             Cancel
           </button>
@@ -243,40 +234,13 @@ export default function ProductFormPanel({
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-md font-medium disabled:opacity-50"
+            className="px-4 py-2 bg-yellow-400 rounded font-medium
+              disabled:opacity-40"
           >
             {loading ? "Saving..." : isEdit ? "Update Product" : "Add Product"}
           </button>
         </div>
       </div>
-
-      {/* CONFIRM UPDATE MODAL */}
-      {showConfirm && (
-        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center">
-          <div className="bg-white rounded p-6 w-80">
-            <h3 className="text-lg font-semibold mb-3">Confirm Update</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Are you sure you want to update this product?
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="border px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={submitForm}
-                className="bg-yellow-400 text-black px-4 py-2 rounded font-medium"
-              >
-                Yes, Update
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

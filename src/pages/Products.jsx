@@ -4,6 +4,7 @@ import ProductTable from "../components/ProductTable";
 import ProductFormPanel from "../components/ProductFormPanel";
 import { disableProduct, getActiveProducts } from "../services/ProductService";
 import toast from "react-hot-toast";
+import ViewProductPanel from "../components/ViewProductPannel";
 
 export default function Products() {
   const [openForm, setOpenForm] = useState(false);
@@ -14,7 +15,9 @@ export default function Products() {
   const [disableTarget, setDisableTarget] = useState(null);
   const [disablingId, setDisablingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  console.log("disableTarget", disableTarget);
+  const [viewProduct, setViewProduct] = useState(null);
+
+  console.log("disableTarget", viewProduct);
 
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -106,6 +109,9 @@ export default function Products() {
             onDisable={(product) => {
               setDisableTarget(product);
             }}
+            onView={(product) => {
+              setViewProduct(product);
+            }}
           />
         )}
       </div>
@@ -116,6 +122,11 @@ export default function Products() {
         product={selectedProduct}
         onClose={() => setOpenForm(false)}
         onSuccess={loadProducts}
+      />
+      <ViewProductPanel
+        open={Boolean(viewProduct)}
+        product={viewProduct}
+        onClose={() => setViewProduct(null)}
       />
 
       {/*alert modal*/}

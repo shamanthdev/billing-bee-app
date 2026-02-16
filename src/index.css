@@ -1,3 +1,35 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ---------- PRINT STYLES ---------- */
+@media print {
+  body {
+    background: white;
+  }
+
+  /* Hide buttons & navigation */
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Remove shadows & spacing */
+  .shadow {
+    box-shadow: none !important;
+  }
+
+  .p-6 {
+    padding: 0 !important;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th,
+  td {
+    border: 1px solid #ddd;
+  }
+}

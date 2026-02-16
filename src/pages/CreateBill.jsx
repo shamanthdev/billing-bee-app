@@ -4,14 +4,19 @@ import toast from "react-hot-toast";
 
 import { getActiveProducts, createBill } from "../services/ProductService";
 
-export default function CreateBill() {
+export default function CreateSale() {
   const navigate = useNavigate();
 
+  /* -------------------- State -------------------- */
   const [products, setProducts] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [billItems, setBillItems] = useState([]);
+  const [discount, setDiscount] = useState(0);
 
+  console.log("selected products",selectedProduct)
+  console.log("billitems",billItems)
   /* -------------------- Load Products -------------------- */
   useEffect(() => {
     loadProducts();
@@ -26,49 +31,89 @@ export default function CreateBill() {
     }
   };
 
-  /* -------------------- Add Item -------------------- */
-  const handleAddItem = () => {
-    const product = products.find((p) => p.id === Number(selectedProductId));
-    if (!product) return;
+  /* -------------------- Product Select -------------------- */
+  const handleProductChange = (e) => {
+    const productId = Number(e.target.value);
+    setSelectedProductId(productId);
 
-    setBillItems((prev) => {
-      const existing = prev.find((item) => item.productId === product.id);
-
-      if (existing) {
-        return prev.map((item) =>
-          item.productId === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + quantity,
-                lineTotal: (item.quantity + quantity) * item.price,
-              }
-            : item,
-        );
-      }
-
-      return [
-        ...prev,
-        {
-          productId: product.id,
-          productName: product.name,
-          price: product.sellingPrice,
-          quantity,
-          lineTotal: product.sellingPrice * quantity,
-        },
-      ];
-    });
-
-    setSelectedProductId("");
-    setQuantity(1);
+    const product = products.find((p) => p.id === productId);
+    setSelectedProduct(product || null);
   };
+
+  /* -------------------- Add Item -------------------- */
+const handleAddItem = () => {
+  if (!selectedProduct) return;
+
+  setBillItems((prev) => {
+    const existingItem = prev.find(
+      (item) => item.productId === selectedProduct.id
+    );
+
+    const taxPercent = selectedProduct.taxPercent || 0;
+    const price = selectedProduct.sellingPrice;
+
+    if (existingItem) {
+      return prev.map((item) => {
+        if (item.productId !== selectedProduct.id) {
+          return item;
+        }
+
+        const newQuantity = item.quantity + quantity;
+        const lineTotal = newQuantity * price;
+        const taxAmount = (lineTotal * taxPercent) / 100;
+
+        return {
+          ...item,
+          quantity: newQuantity,
+          lineTotal,
+          taxPercent,
+          taxAmount,
+        };
+      });
+    }
+
+    const lineTotal = price * quantity;
+    const taxAmount = (lineTotal * taxPercent) / 100;
+
+    return [
+      ...prev,
+      {
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        price,
+        quantity,
+        taxPercent,
+        taxAmount,
+        lineTotal,
+      },
+    ];
+  });
+
+  // reset
+  setSelectedProductId("");
+  setSelectedProduct(null);
+  setQuantity(1);
+};
+
 
   /* -------------------- Remove Item -------------------- */
   const handleRemoveItem = (index) => {
     setBillItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  /* -------------------- Totals -------------------- */
-  const subtotal = billItems.reduce((sum, item) => sum + item.lineTotal, 0);
+  /* -------------------- Calculations -------------------- */
+  const subtotal = billItems.reduce(
+    (sum, item) => sum + item.lineTotal,
+    0,
+  );
+
+  const totalGst = billItems.reduce(
+    (sum, item) => sum + item.taxAmount,
+    0,
+  );
+
+  const total =
+    subtotal - Number(discount || 0) + totalGst;
 
   /* -------------------- Cancel -------------------- */
   const handleCancel = () => {
@@ -81,13 +126,14 @@ export default function CreateBill() {
     navigate("/sales");
   };
 
-  /* -------------------- Create Bill -------------------- */
-  const handleCreateBill = async () => {
+  /* -------------------- Create Sale -------------------- */
+  const handleCreateSale = async () => {
     const payload = {
       items: billItems.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
       })),
+      discount: Number(discount || 0),
     };
 
     try {
@@ -100,13 +146,14 @@ export default function CreateBill() {
     }
   };
 
+  /* -------------------- UI -------------------- */
   return (
     <div className="p-6 max-w-6xl">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-xl font-semibold">Create Sale</h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 mt-1">
             Add products and generate a sales invoice
           </p>
         </div>
@@ -119,14 +166,17 @@ export default function CreateBill() {
         </button>
       </div>
 
-      {/* Add Item (FULL WIDTH — gap fixed) */}
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <h2 className="text-sm font-medium text-gray-700 mb-4">Add Item</h2>
+      {/* Add Item */}
+      <div className="bg-white p-4 rounded shadow mb-6 max-w-4xl">
+        <h2 className="text-sm font-medium text-gray-700 mb-4">
+          Add Item
+        </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div className="grid grid-cols-4 gap-4 items-end">
+          {/* Product */}
           <select
             value={selectedProductId}
-            onChange={(e) => setSelectedProductId(e.target.value)}
+            onChange={handleProductChange}
             className="border rounded-md px-3 py-2 text-sm
               focus:outline-none focus:ring-2 focus:ring-yellow-400"
           >
@@ -138,6 +188,7 @@ export default function CreateBill() {
             ))}
           </select>
 
+          {/* Quantity */}
           <input
             type="number"
             min="1"
@@ -147,13 +198,23 @@ export default function CreateBill() {
               focus:outline-none focus:ring-2 focus:ring-yellow-400"
           />
 
+          {/* GST (Read-only) */}
+          <div className="border rounded-md px-3 py-2 text-sm bg-gray-50">
+            <div className="text-xs text-gray-500">GST %</div>
+            <div className="font-medium">
+              {selectedProduct
+                ? `${selectedProduct.taxPercent ?? 0}%`
+                : "--"}
+            </div>
+          </div>
+
+          {/* Add Button */}
           <button
             onClick={handleAddItem}
-            disabled={!selectedProductId || quantity < 1}
+            disabled={!selectedProduct || quantity < 1}
             className="bg-yellow-400 hover:bg-yellow-500 text-black
-    px-5 py-2 rounded-md text-sm font-medium
-    whitespace-nowrap
-    disabled:opacity-40 disabled:cursor-not-allowed"
+              rounded-md px-4 py-2 font-medium
+              disabled:opacity-40 disabled:cursor-not-allowed"
           >
             + Add to Sale
           </button>
@@ -161,32 +222,44 @@ export default function CreateBill() {
       </div>
 
       {/* Items Table */}
-      <div className="bg-white rounded shadow">
+      <div className="bg-white rounded shadow mb-4">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
             <tr>
-              <th className="text-left px-4 py-3">Product</th>
-              <th className="text-left px-4 py-3">Price</th>
-              <th className="text-left px-4 py-3">Qty</th>
-              <th className="text-left px-4 py-3">Total</th>
-              <th className="px-4 py-3 text-center">Action</th>
+              <th className="text-left px-4 py-2">Product</th>
+              <th className="text-left px-4 py-2">Price</th>
+              <th className="text-left px-4 py-2">Qty</th>
+              <th className="text-left px-4 py-2">GST</th>
+              <th className="text-left px-4 py-2">Total</th>
+              <th className="px-4 py-2">Action</th>
             </tr>
           </thead>
           <tbody>
             {billItems.length === 0 ? (
               <tr>
-                <td colSpan="5" className="text-center py-8 text-gray-500">
+                <td
+                  colSpan="6"
+                  className="text-center py-6 text-gray-500"
+                >
                   No items added yet.
                 </td>
               </tr>
             ) : (
               billItems.map((item, index) => (
-                <tr key={index} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium">{item.productName}</td>
-                  <td className="px-4 py-3">₹{item.price}</td>
-                  <td className="px-4 py-3">{item.quantity}</td>
-                  <td className="px-4 py-3">₹{item.lineTotal}</td>
-                  <td className="px-4 py-3 text-center">
+                <tr key={index} className="border-t">
+                  <td className="px-4 py-2">
+                    {item.productName}
+                  </td>
+                  <td className="px-4 py-2">₹{item.price}</td>
+                  <td className="px-4 py-2">{item.quantity}</td>
+                  <td className="px-4 py-2">
+                    {item.taxPercent}% (₹
+                    {item.taxAmount})
+                  </td>
+                  <td className="px-4 py-2">
+                    ₹{item.lineTotal}
+                  </td>
+                  <td className="px-4 py-2 text-center">
                     <button
                       onClick={() => handleRemoveItem(index)}
                       className="text-red-500 hover:underline"
@@ -201,21 +274,37 @@ export default function CreateBill() {
         </table>
       </div>
 
-      {/* Summary (below table, right aligned) */}
-      <div className="flex justify-end mt-4">
+      {/* Summary */}
+      <div className="flex justify-end">
         <div className="bg-white p-4 rounded shadow w-full max-w-md">
-          <div className="flex justify-between mb-2 text-sm">
-            <span className="text-gray-600">Subtotal</span>
-            <span className="font-medium">₹{subtotal}</span>
+          <div className="flex justify-between text-sm mb-2">
+            <span>Subtotal</span>
+            <span>₹{subtotal.toFixed(2)}</span>
+          </div>
+
+          <div className="flex justify-between text-sm mb-2">
+            <span>GST</span>
+            <span>₹{totalGst.toFixed(2)}</span>
+          </div>
+
+          <div className="flex justify-between text-sm mb-2">
+            <span>Discount</span>
+            <input
+              type="number"
+              min="0"
+              value={discount}
+              onChange={(e) => setDiscount(e.target.value)}
+              className="w-24 border rounded px-2 py-1 text-right"
+            />
           </div>
 
           <div className="flex justify-between font-semibold text-lg mb-4">
             <span>Total</span>
-            <span>₹{subtotal}</span>
+            <span>₹{total.toFixed(2)}</span>
           </div>
 
           <button
-            onClick={handleCreateBill}
+            onClick={handleCreateSale}
             disabled={billItems.length === 0}
             className="w-full bg-black text-white py-2 rounded
               disabled:opacity-40 disabled:cursor-not-allowed"

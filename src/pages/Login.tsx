@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import billingbee from "../assets/beelogo.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -8,7 +9,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,28 +21,31 @@ const Login = () => {
 
     setError("");
     setLoading(true);
-  
+
     // Simulate API call
     setTimeout(() => {
       setLoading(false);
-    navigate("/");
+      navigate("/dashboard");
       console.log("Login payload:", { email, password });
     }, 1500);
   };
 
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md bg-white px-8 py-10 rounded-lg shadow-sm">
-        
+      <div className="w-full max-w-md bg-white px-8 py-8  rounded-lg shadow-sm">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
+        <div className="text-center mb-2">
+          <img
+            src={billingbee}
+            alt="Billing Bee Logo"
+            className="mx-auto h-16 mb-3 w-auto"
+          />
+          {/* <h1 className="text-3xl font-bold text-gray-800">
             Billing <span className="text-yellow-500">Bee</span>
           </h1>
           <p className="text-sm text-gray-500 mt-2">
             Smart Billing for Everyday Businesses
-          </p>
+          </p> */}
         </div>
 
         {/* Error */}
