@@ -33,3 +33,20 @@
     border: 1px solid #ddd;
   }
 }
+
+/* slide animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.18s ease-out;
+}
+

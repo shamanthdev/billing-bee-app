@@ -25,7 +25,7 @@ const isActive = location.pathname.startsWith(path);
   };
 
   return (
-    <div className="h-screen w-60 bg-black text-white flex flex-col">
+    <div className="min-h-screen w-60 bg-black text-white flex flex-col">
       {/* Logo */}
       <div className="px-6 py-4 text-xl font-bold text-yellow-400">
         Billing Bee

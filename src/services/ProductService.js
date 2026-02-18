@@ -66,3 +66,5 @@ export const getBillById = async (id) => {
   const response = await api.get(`/bills/${id}`);
   return response.data;
 };
+
+export const cancelBill = (id) => api.put(`/bills/${id}/cancel`);

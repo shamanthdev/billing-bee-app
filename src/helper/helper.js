@@ -43,3 +43,13 @@ export function breadcrumb(bill, navigate) {
       </div>
       )
 }
+export function getAlignClass(align) {
+  switch (align) {
+    case "right":
+      return "text-right";
+    case "center":
+      return "text-center";
+    default:
+      return "text-left";
+  }
+}
