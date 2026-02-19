@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import { getActiveProducts, createBill } from "../../services/ProductService";
+import { getActiveProducts } from "../../services/ProductService";
+import {
+  createBill,
+  updateBill,
+  getBillDetails,
+} from "../../services/BillService";
 import { getCustomers } from "../../services/CustomerService";
 import DataTable from "../../common/DataTable";
 
 export default function CreateSale() {
   const navigate = useNavigate();
+  const { billId } = useParams();
+  const isEdit = Boolean(billId);
 
   /* -------------------- State -------------------- */
   const [products, setProducts] = useState([]);
@@ -28,6 +35,13 @@ export default function CreateSale() {
     loadCustomers();
   }, []);
 
+  /* -------------------- Load Bill (Edit Mode) -------------------- */
+  useEffect(() => {
+    if (isEdit) {
+      loadBillForEdit();
+    }
+  }, [billId]);
+
   const loadProducts = async () => {
     try {
       const data = await getActiveProducts();
@@ -43,6 +57,31 @@ export default function CreateSale() {
       setCustomers(res.data);
     } catch {
       toast.error("Failed to load customers");
+    }
+  };
+
+  const loadBillForEdit = async () => {
+    try {
+      const res = await getBillDetails(billId);
+      const bill = res;
+
+      setCustomerId(bill.customerId);
+      setDiscount(bill.discount || 0);
+
+      setBillItems(
+        bill.items.map((i) => ({
+          productId: i.productId,
+          productName: i.productName,
+          price: i.price,
+          quantity: i.quantity,
+          taxPercent: i.gstPercent,
+          taxAmount: i.gstAmount,
+          lineTotal: i.lineTotal,
+        }))
+      );
+    } catch (error) {
+      toast.error("Failed to load bill for edit");
+      navigate("/sales");
     }
   };
 
@@ -127,19 +166,11 @@ export default function CreateSale() {
 
   /* -------------------- Cancel -------------------- */
   const handleCancel = () => {
-    if (billItems.length > 0) {
-      if (
-        !window.confirm(
-          "You have unsaved items. Are you sure you want to cancel?"
-        )
-      )
-        return;
-    }
-    navigate("/sales");
+    navigate(-1);
   };
 
-  /* -------------------- Create Bill -------------------- */
-  const handleCreateSale = async () => {
+  /* -------------------- Create / Update -------------------- */
+  const handleSubmitSale = async () => {
     if (!customerId) {
       toast.error("Please select a customer");
       return;
@@ -160,13 +191,19 @@ export default function CreateSale() {
     };
 
     try {
-      await createBill(payload);
-      toast.success("Sale created successfully");
-      navigate("/sales");
+      if (isEdit) {
+        await updateBill(billId, payload);
+        toast.success("Sale updated successfully");
+        navigate(`/sales/${billId}`);
+      } else {
+        await createBill(payload);
+        toast.success("Sale created successfully");
+        navigate("/sales");
+      }
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
-          "Failed to create sale"
+          "Failed to save sale"
       );
     }
   };
@@ -177,9 +214,13 @@ export default function CreateSale() {
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 className="text-xl font-semibold">Create Sale</h1>
+          <h1 className="text-xl font-semibold">
+            {isEdit ? "Edit Sale" : "Create Sale"}
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Add products and generate a sales invoice
+            {isEdit
+              ? "Update products and pricing"
+              : "Add products and generate a sales invoice"}
           </p>
         </div>
 
@@ -242,9 +283,7 @@ export default function CreateSale() {
           />
 
           <div className="border rounded-md px-3 py-2 text-sm bg-gray-50">
-            <div className="text-xs text-gray-500">
-              GST %
-            </div>
+            <div className="text-xs text-gray-500">GST %</div>
             <div className="font-medium">
               {selectedProduct
                 ? `${selectedProduct.taxPercent ?? 0}%`
@@ -277,9 +316,7 @@ export default function CreateSale() {
         {billItems.map((item, index) => (
           <tr key={index} className="border-b">
             <td className="px-4 py-3">{item.productName}</td>
-            <td className="px-4 py-3 text-right">
-              ₹{item.price}
-            </td>
+            <td className="px-4 py-3 text-right">₹{item.price}</td>
             <td className="px-4 py-3 text-center">
               {item.quantity}
             </td>
@@ -320,9 +357,7 @@ export default function CreateSale() {
               type="number"
               min="0"
               value={discount}
-              onChange={(e) =>
-                setDiscount(e.target.value)
-              }
+              onChange={(e) => setDiscount(e.target.value)}
               className="w-24 border rounded px-2 py-1 text-right"
             />
           </div>
@@ -333,10 +368,10 @@ export default function CreateSale() {
           </div>
 
           <button
-            onClick={handleCreateSale}
+            onClick={handleSubmitSale}
             className="w-full bg-black text-white py-2 rounded"
           >
-            Create Sale
+            {isEdit ? "Update Sale" : "Create Sale"}
           </button>
         </div>
       </div>

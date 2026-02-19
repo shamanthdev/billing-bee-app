@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import { getBills } from "../../services/ProductService";
+import { getBills } from "../../services/BillService";
 import { dateViewFormating } from "../../helper/helper";
 
 import DataTable from "../../common/DataTable";
