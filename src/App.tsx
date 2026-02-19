@@ -29,6 +29,8 @@ function App() {
             <Route path="/sales/create" element={<CreateBill />} />
             <Route path="/sales/:id" element={<BillDetails />} />
             <Route path="/customers" element={<CustomerListPage />} />
+            <Route path="/sales/edit-bill/:billId" element={<CreateBill />} />
+
           </Route>
 
           {/* Standalone pages */}

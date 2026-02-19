@@ -2,12 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import {
-  getBillDetails,
-  cancelBill,
-} from "../../services/ProductService";
+import { getBillDetails, cancelBill } from "../../services/BillService";
 
 import ConfirmModal from "../../common/ConfirmModal";
+import PaymentSection from "./payments/PaymentSection";
+import PaymentDetails from "./payments/PaymentDetails";
 
 export default function BillDetails() {
   const { id } = useParams();
@@ -50,12 +49,14 @@ export default function BillDetails() {
       setShowCancelConfirm(false);
       loadBill();
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Failed to cancel bill"
-      );
+      toast.error(err?.response?.data?.message || "Failed to cancel bill");
     } finally {
       setCancelLoading(false);
     }
+  };
+  const handlePaymentSuccess = () => {
+    // After payment, just refresh bill details
+    loadBill();
   };
 
   if (loading) return <div className="p-6">Loading bill details...</div>;
@@ -74,9 +75,7 @@ export default function BillDetails() {
             Sales
           </span>
           <span className="mx-2">/</span>
-          <span className="font-medium text-gray-800">
-            {bill.billNumber}
-          </span>
+          <span className="font-medium text-gray-800">{bill.billNumber}</span>
         </div>
 
         {/* Actions */}
@@ -125,20 +124,16 @@ export default function BillDetails() {
 
           <div className="text-sm text-gray-600 space-y-1">
             <div>
-              Invoice No:{" "}
-              <span className="font-medium">{bill.billNumber}</span>
+              Invoice No: <span className="font-medium">{bill.billNumber}</span>
             </div>
 
             <div>
-              Date:{" "}
-              {new Date(bill.billDate).toLocaleDateString("en-IN")}
+              Date: {new Date(bill.billDate).toLocaleDateString("en-IN")}
             </div>
 
             <div>
               Customer:{" "}
-              <span className="font-medium">
-                {bill.customerName || "—"}
-              </span>
+              <span className="font-medium">{bill.customerName || "—"}</span>
             </div>
           </div>
         </div>
@@ -176,9 +171,7 @@ export default function BillDetails() {
                 <td className="px-4 py-2 text-right">
                   ₹{Number(item.price).toFixed(2)}
                 </td>
-                <td className="px-4 py-2 text-right">
-                  {item.quantity}
-                </td>
+                <td className="px-4 py-2 text-right">{item.quantity}</td>
                 <td className="px-4 py-2 text-right">
                   {Number(item.gstPercent)}%
                 </td>
@@ -226,6 +219,20 @@ export default function BillDetails() {
           </div>
         </div>
       </div>
+
+      <PaymentDetails billId={bill.id} billStatus={bill.status} />
+
+      {/* Payment Section */}
+      <PaymentSection bill={bill} onPaymentSuccess={handlePaymentSuccess} />
+
+      {bill.status === "ACTIVE" && (
+        <button
+          onClick={() => navigate(`/sales/edit-bill/${bill.id}`)}
+          className="rounded-md bg-yellow-500 px-4 py-2 text-sm text-white hover:bg-yellow-600"
+        >
+          Edit Bill
+        </button>
+      )}
 
       {/* Confirm Cancel Modal */}
       <ConfirmModal
