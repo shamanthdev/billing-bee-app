@@ -42,7 +42,7 @@ const PaymentDetails = ({ billId, billStatus }) => {
   if (!payment) return null;
 
   return (
-    <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4">
+    <div className="rounded-lg border border-green-200 bg-green-50 p-4">
       <h3 className="mb-4 text-sm font-semibold text-green-800">
         Payment Details
       </h3>

@@ -86,9 +86,16 @@ export default function CustomerListPage() {
 
       {/* Table */}
       <DataTable
-        columns={["Name", "Phone", "Email", "Actions"]}
-        emptyText="No customers found"
-      >
+             columns={[
+               { label: "Customer Name", align: "left" },
+               { label: "Email", align: "left" },
+               { label: "Phone", align: "left" }, // ✅ ADDED
+             
+           
+               { label: "Actions", align: "left" },
+             ]}
+             emptyText="No Customer found"
+           >
         {customers.map((c) => (
           <tr
             key={c.id}

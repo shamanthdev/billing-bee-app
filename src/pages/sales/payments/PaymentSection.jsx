@@ -10,10 +10,20 @@ const PaymentSection = ({ bill, onPaymentSuccess }) => {
   }
 
   return (
-    <div className="mt-6 flex justify-end">
+     <div className="mt-6 flex justify-end">
       <button
         onClick={() => setShowModal(true)}
-        className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
+        className="
+          rounded-md
+          bg-indigo-600
+          px-6 py-3
+          text-sm font-medium
+          text-white
+          shadow-sm
+          hover:bg-indigo-700
+          hover:shadow-md
+          transition
+        "
       >
         Pay Now
       </button>

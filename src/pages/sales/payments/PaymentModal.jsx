@@ -1,60 +1,68 @@
 import { useState } from "react";
-import { createPayment } from "../../../services/PaymentService";
+import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
+import { createPayment } from "../../../services/PaymentService";
 
-const PaymentModal = ({ bill, onClose, onSuccess }) => {
+export default function PaymentModal({ bill, onClose, onSuccess }) {
   const [paymentMode, setPaymentMode] = useState("");
-  const [transactionRef, setTransactionRef] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleConfirm = async () => {
     if (!paymentMode) {
       toast.error("Please select payment mode");
       return;
     }
 
-    const payload = {
-      billId: bill.id,
-      paymentMode,
-      amount: bill.total,
-      transactionRef:
-        paymentMode === "UPI" || paymentMode === "CARD"
-          ? transactionRef
-          : null,
-    };
-
     try {
       setLoading(true);
-      await createPayment(payload);
+
+      await createPayment({
+        billId: bill.id,
+        paymentMode,
+        amount: bill.total,
+      });
+
       toast.success("Payment successful");
       onSuccess();
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
       toast.error(
-        error?.response?.data?.message ||
-          "Payment failed. Please try again."
+        err?.response?.data?.message || "Payment failed"
       );
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-        <h2 className="mb-4 text-lg font-semibold text-gray-800">
+  return createPortal(
+    <div
+      className="
+        fixed inset-0 z-[9999]
+        flex items-center justify-center
+        bg-black/50 backdrop-blur-sm
+      "
+    >
+      {/* Modal */}
+      <div
+        className="
+          w-full max-w-md
+          rounded-xl bg-white
+          shadow-2xl
+          p-6
+          animate-scale-in
+        "
+      >
+        <h2 className="text-lg font-semibold mb-4">
           Make Payment
         </h2>
 
-        {/* Payment Mode */}
         <div className="mb-4">
-          <label className="mb-1 block text-sm font-medium text-gray-600">
+          <label className="block text-sm font-medium mb-1">
             Payment Mode
           </label>
           <select
             value={paymentMode}
             onChange={(e) => setPaymentMode(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">Select</option>
             <option value="CASH">Cash</option>
@@ -63,56 +71,36 @@ const PaymentModal = ({ bill, onClose, onSuccess }) => {
           </select>
         </div>
 
-        {/* Amount */}
-        <div className="mb-4">
-          <label className="mb-1 block text-sm font-medium text-gray-600">
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-1">
             Amount
           </label>
           <input
-            type="text"
             value={bill.total}
             disabled
-            className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm"
+            className="w-full rounded-md border bg-gray-100 px-3 py-2 text-sm"
           />
         </div>
 
-        {/* Transaction Ref */}
-        {(paymentMode === "UPI" || paymentMode === "CARD") && (
-          <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium text-gray-600">
-              Transaction Reference
-            </label>
-            <input
-              type="text"
-              value={transactionRef}
-              onChange={(e) => setTransactionRef(e.target.value)}
-              placeholder="Enter transaction reference"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
             disabled={loading}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
+            className="px-4 py-2 rounded-md border text-sm hover:bg-gray-100"
           >
             Cancel
           </button>
 
           <button
-            onClick={handleSubmit}
+            onClick={handleConfirm}
             disabled={loading}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition disabled:opacity-60"
+            className="px-5 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
           >
             {loading ? "Processing..." : "Confirm Payment"}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body // 🔥 THIS IS THE FIX
   );
-};
-
-export default PaymentModal;
+}
