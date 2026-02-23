@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - docker-ci
   pull_request:
     branches:
       - main
+      - docker-ci
 
 jobs:
   build:
