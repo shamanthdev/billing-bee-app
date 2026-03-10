@@ -3,7 +3,7 @@ import api from "../api/axios";
 
 export const getActiveProducts = async () => {
   const response = await api.get("/products");
-  return response.data;
+  return response;
 };
 
 export const getProductById = async (id) => {

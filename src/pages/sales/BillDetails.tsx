@@ -8,23 +8,45 @@ import ConfirmModal from "../../common/ConfirmModal";
 import PaymentSection from "./payments/PaymentSection";
 import PaymentDetails from "./payments/PaymentDetails";
 
+/* Minimal typing — we refine later */
+interface BillItem {
+  productName: string;
+  price: number;
+  quantity: number;
+  gstPercent: number;
+  gstAmount: number;
+  lineTotal: number;
+}
+
+interface Bill {
+  id: number;
+  billNumber: string;
+  billDate: string;
+  customerName: string;
+  status: "ACTIVE" | "PAID" | "CANCELLED";
+  items: BillItem[];
+  subtotal: number;
+  discount: number;
+  gstAmount: number;
+  total: number;
+}
+
 export default function BillDetails() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [bill, setBill] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [bill, setBill] = useState<Bill | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [cancelLoading, setCancelLoading] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState<boolean>(false);
+  const [cancelLoading, setCancelLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!id) return;
     loadBill();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, [id]);
 
-  /* ---------------- LOAD BILL ---------------- */
   const loadBill = async () => {
     try {
       setLoading(true);
@@ -38,7 +60,6 @@ export default function BillDetails() {
     }
   };
 
-  /* ---------------- CANCEL BILL ---------------- */
   const handleCancelBill = async () => {
     if (!bill) return;
 
@@ -48,42 +69,56 @@ export default function BillDetails() {
       toast.success("Bill cancelled successfully");
       setShowCancelConfirm(false);
       loadBill();
-    } catch (err) {
+    } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to cancel bill");
     } finally {
       setCancelLoading(false);
     }
   };
+
   const handlePaymentSuccess = () => {
-    // After payment, just refresh bill details
     loadBill();
   };
 
-  if (loading) return <div className="p-6">Loading bill details...</div>;
-  if (!bill) return <div className="p-6">Bill not found</div>;
+  if (loading)
+    return (
+      <div className="p-6 min-h-screen bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300">
+        Loading bill details...
+      </div>
+    );
+
+  if (!bill)
+    return (
+      <div className="p-6 min-h-screen bg-white dark:bg-slate-900 text-red-500">
+        Bill not found
+      </div>
+    );
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto min-h-screen bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-200 transition-colors">
+
       {/* Top Bar */}
       <div className="flex justify-between items-center mb-8 no-print">
-        {/* Breadcrumb */}
-        <div className="text-sm text-gray-500 flex items-center">
+        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
           <span
             onClick={() => navigate("/sales")}
-            className="cursor-pointer hover:underline"
+            className="cursor-pointer hover:text-gray-900 dark:hover:text-white transition"
           >
             Sales
           </span>
           <span className="mx-2">/</span>
-          <span className="font-medium text-gray-800">{bill.billNumber}</span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {bill.billNumber}
+          </span>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex items-center gap-3">
           {bill.status === "ACTIVE" && (
             <>
               <button
-                onClick={() => navigate(`/sales/edit-bill/${bill.id}`)}
+                onClick={() =>
+                  navigate(`/sales/edit-bill/${bill.id}`)
+                }
                 className="px-4 py-2 rounded-md bg-yellow-500 text-white text-sm font-medium hover:bg-yellow-600 transition"
               >
                 Edit Bill
@@ -91,7 +126,7 @@ export default function BillDetails() {
 
               <button
                 onClick={() => setShowCancelConfirm(true)}
-                className="px-4 py-2 rounded-md border border-red-500 text-red-600 text-sm font-medium hover:bg-red-50 transition"
+                className="px-4 py-2 rounded-md border border-red-500 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10 transition"
               >
                 Cancel Bill
               </button>
@@ -101,7 +136,7 @@ export default function BillDetails() {
           <button
             onClick={() => window.print()}
             disabled={bill.status === "CANCELLED"}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition disabled:opacity-40"
           >
             Print / PDF
           </button>
@@ -111,29 +146,34 @@ export default function BillDetails() {
       {/* Invoice Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-2xl font-semibold mb-1">INVOICE</h1>
-          <div className="text-sm text-gray-600 space-y-1">
+          <h1 className="text-2xl font-semibold mb-2">INVOICE</h1>
+          <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
             <div>
-              Invoice No: <span className="font-medium">{bill.billNumber}</span>
+              Invoice No:{" "}
+              <span className="font-medium text-gray-900 dark:text-white">
+                {bill.billNumber}
+              </span>
             </div>
             <div>
-              Date: {new Date(bill.billDate).toLocaleDateString("en-IN")}
+              Date:{" "}
+              {new Date(bill.billDate).toLocaleDateString("en-IN")}
             </div>
             <div>
               Customer:{" "}
-              <span className="font-medium">{bill.customerName || "—"}</span>
+              <span className="font-medium text-gray-900 dark:text-white">
+                {bill.customerName || "—"}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Status */}
         <span
-          className={`px-3 py-1 rounded text-sm font-medium ${
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${
             bill.status === "CANCELLED"
-              ? "bg-red-100 text-red-700"
+              ? "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400"
               : bill.status === "PAID"
-                ? "bg-green-100 text-green-700"
-                : "bg-yellow-100 text-yellow-700"
+              ? "bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400"
+              : "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
           }`}
         >
           {bill.status}
@@ -141,9 +181,9 @@ export default function BillDetails() {
       </div>
 
       {/* Items Table */}
-      <div className="bg-white rounded-lg shadow mb-8 overflow-x-auto">
+      <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 shadow mb-8 overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
+          <thead className="bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 uppercase text-xs">
             <tr>
               <th className="text-left px-4 py-3">Product</th>
               <th className="text-right px-4 py-3">Price</th>
@@ -155,18 +195,21 @@ export default function BillDetails() {
           </thead>
           <tbody>
             {bill.items.map((item, idx) => (
-              <tr key={idx} className="border-t">
+              <tr
+                key={idx}
+                className="border-t border-gray-200 dark:border-white/10"
+              >
                 <td className="px-4 py-3">{item.productName}</td>
                 <td className="px-4 py-3 text-right">
-                  ₹{Number(item.price).toFixed(2)}
+                  ₹{item.price.toFixed(2)}
                 </td>
                 <td className="px-4 py-3 text-right">{item.quantity}</td>
                 <td className="px-4 py-3 text-right">{item.gstPercent}%</td>
                 <td className="px-4 py-3 text-right">
-                  ₹{Number(item.gstAmount).toFixed(2)}
+                  ₹{item.gstAmount.toFixed(2)}
                 </td>
                 <td className="px-4 py-3 text-right font-medium">
-                  ₹{Number(item.lineTotal).toFixed(2)}
+                  ₹{item.lineTotal.toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -176,61 +219,44 @@ export default function BillDetails() {
 
       {/* Summary + Payment */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* Summary */}
-        <div className="bg-white border rounded-lg shadow-sm">
-          <div className="p-4 space-y-2 text-sm">
-            <div className="flex justify-between text-gray-600">
+        <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 shadow">
+          <div className="p-4 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+            <div className="flex justify-between">
               <span>Subtotal</span>
               <span>₹{bill.subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between">
               <span>Discount</span>
               <span>- ₹{bill.discount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between">
               <span>GST</span>
               <span>₹{bill.gstAmount.toFixed(2)}</span>
             </div>
           </div>
 
-          <div className="border-t border-dashed" />
+          <div className="border-t border-gray-200 dark:border-white/10" />
 
-          <div className="p-4 flex justify-between items-center bg-gray-50">
-            <span className="text-base font-semibold">Total Payable</span>
-            <span className="text-2xl font-bold">₹{bill.total.toFixed(2)}</span>
+          <div className="p-4 flex justify-between items-center bg-gray-50 dark:bg-white/5">
+            <span className="text-base font-semibold">
+              Total Payable
+            </span>
+            <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+              ₹{bill.total.toFixed(2)}
+            </span>
           </div>
         </div>
 
-        {/* Payment Details */}
-        <div
-  className={`
-    transition-all duration-300 ease-out
-    ${
-      bill.status === "PAID"
-        ? "opacity-100 translate-y-0"
-        : "opacity-0 translate-y-2"
-    }
-  `}
->
         <PaymentDetails billId={bill.id} billStatus={bill.status} />
-</div>
       </div>
 
-      {/* Pay Now */}
-      <div
-  className={`
-    transition-all duration-300 ease-out
-    ${
-      bill.status === "ACTIVE"
-        ? "opacity-100 translate-y-0"
-        : "opacity-0 translate-y-4 pointer-events-none"
-    }
-  `}
->
-      <PaymentSection bill={bill} onPaymentSuccess={handlePaymentSuccess} />
-      </div>
+      {bill.status === "ACTIVE" && (
+        <PaymentSection
+          bill={bill}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
 
-      {/* Cancel Modal */}
       <ConfirmModal
         open={showCancelConfirm}
         title="Cancel Bill"
@@ -240,7 +266,9 @@ export default function BillDetails() {
         loading={cancelLoading}
         confirmText="Yes, Cancel Bill"
         onConfirm={handleCancelBill}
-        onCancel={() => !cancelLoading && setShowCancelConfirm(false)}
+        onCancel={() =>
+          !cancelLoading && setShowCancelConfirm(false)
+        }
       />
     </div>
   );

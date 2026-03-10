@@ -1,93 +1,74 @@
+import { createPortal } from "react-dom";
+
 export default function ConfirmModal({
   open,
-  title = "Confirm",
+  title,
   message,
   subMessage,
+  danger = false,
+  loading = false,
   confirmText = "Confirm",
-  cancelText = "Cancel",
   onConfirm,
   onCancel,
-  danger = false,   // 🔴 danger variant
-  loading = false,  // ⏳ loading state
 }) {
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50">
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black/30"
-        onClick={!loading ? onCancel : undefined}
-      />
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-xl bg-white dark:bg-[#1c1c1c] shadow-2xl overflow-hidden animate-fadeIn">
 
-      {/* Modal */}
-      <div
-        className="
-          relative
-          w-[420px]
-          bg-white
-          rounded-md
-          shadow-lg
-          mx-auto
-          mt-24
-          animate-slideDown
-        "
-      >
         {/* Header */}
-        <div className="px-5 py-3 border-b flex justify-between items-center">
-          <h3 className="text-sm font-semibold text-gray-800">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             {title}
-          </h3>
+          </h2>
+
           <button
             onClick={onCancel}
             disabled={loading}
-            className="text-gray-500 hover:text-gray-700 disabled:opacity-50"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
             ✕
           </button>
         </div>
 
         {/* Body */}
-        <div className="px-5 py-4 text-sm text-gray-700">
-          <p className="mb-2">{message}</p>
+        <div className="px-6 py-5">
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {message}
+          </p>
+
           {subMessage && (
-            <p className="font-medium text-gray-900">
+            <p className="text-xs text-gray-500 mt-2">
               {subMessage}
             </p>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t flex justify-end gap-3">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-[#141414] border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
           <button
             onClick={onCancel}
             disabled={loading}
-            className="px-4 py-1.5 border rounded-md text-sm disabled:opacity-50"
+            className="px-4 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
           >
-            {cancelText}
+            Cancel
           </button>
 
           <button
             onClick={onConfirm}
             disabled={loading}
-            className={`
-              px-4 py-1.5
-              rounded-md
-              text-sm
-              text-white
-              ${
-                danger
-                  ? "bg-red-600 hover:bg-red-700"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }
-              disabled:opacity-60
-              disabled:cursor-not-allowed
-            `}
+            className={`px-5 py-2 text-sm rounded-md font-medium transition ${
+              danger
+                ? "bg-red-600 text-white hover:bg-red-700"
+                : "bg-indigo-600 text-white hover:bg-indigo-700"
+            } disabled:opacity-50`}
           >
-            {loading ? "Please wait..." : confirmText}
+            {loading ? "Processing..." : confirmText}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

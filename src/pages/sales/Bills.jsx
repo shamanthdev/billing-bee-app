@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { Eye } from "lucide-react";
 
 import { getBills } from "../../services/BillService";
 import { dateViewFormating } from "../../helper/helper";
-
 import DataTable from "../../common/DataTable";
 import LoadingOverlay from "../../common/LoadingOverlay";
 
@@ -25,11 +25,9 @@ export default function Bills() {
     loadBills();
   }, [page, size, search]);
 
-  /* ---------------- LOAD BILLS ---------------- */
   const loadBills = async () => {
     try {
       setLoading(true);
-      await new Promise((r) => setTimeout(r, 0)); // allow loader paint
 
       const data = await getBills({
         page,
@@ -42,7 +40,6 @@ export default function Bills() {
       setTotalElements(data.totalElements || 0);
     } catch (err) {
       toast.error("Failed to load bills");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -52,24 +49,31 @@ export default function Bills() {
   const endRecord = Math.min((page + 1) * size, totalElements);
 
   return (
-    <div className="p-6 max-w-6xl relative">
-      {/* Loader */}
+    <div className="max-w-7xl mx-auto relative">
+
       <LoadingOverlay show={loading} text="Loading bills..." />
 
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-semibold">Bills</h1>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Bills
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Manage all generated invoices
+          </p>
+        </div>
 
         <button
           onClick={() => navigate("/sales/create")}
-          className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-md font-medium"
+          className="bg-primary hover:bg-primaryHover text-black px-5 py-2.5 rounded-lg font-medium shadow-sm hover:shadow-md transition"
         >
           + Create Bill
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex justify-between items-center mb-4 gap-4">
+      {/* Search */}
+      <div className="mb-6">
         <input
           type="text"
           placeholder="Search bill number..."
@@ -78,7 +82,13 @@ export default function Bills() {
             setPage(0);
             setSearch(e.target.value);
           }}
-          className="border px-3 py-2 rounded w-64 text-sm"
+          className="
+            w-72 rounded-lg px-4 py-2.5 text-sm
+            bg-white dark:bg-[#1f1f1f]
+            border border-gray-300 dark:border-gray-700
+            focus:outline-none focus:ring-2 focus:ring-primary
+            transition
+          "
         />
       </div>
 
@@ -87,7 +97,7 @@ export default function Bills() {
         columns={[
           { label: "Bill No", align: "left" },
           { label: "Date", align: "left" },
-          { label: "Customer", align: "left" }, // ✅ ADDED
+          { label: "Customer", align: "left" },
           { label: "Discount", align: "right" },
           { label: "GST", align: "right" },
           { label: "Subtotal", align: "right" },
@@ -100,123 +110,114 @@ export default function Bills() {
         {bills.map((bill) => (
           <tr
             key={bill.id}
-            className="border-b last:border-b-0 hover:bg-gray-50"
+            className="
+              border-b border-gray-200 dark:border-gray-800
+              hover:bg-gray-200 dark:hover:bg-[#202020]
+              transition duration-200
+            "
           >
-            <td className="px-4 py-3 text-sm font-medium">{bill.billNumber}</td>
+            <td className="px-4 py-4 font-medium">
+              {bill.billNumber}
+            </td>
 
-            <td className="px-4 py-3 text-sm text-gray-500">
+            <td className="px-4 py-4 text-gray-500 dark:text-gray-400">
               {dateViewFormating(bill.billDate)}
             </td>
 
-            <td className="px-4 py-3 text-sm">{bill.customerName || "-"}</td>
+            <td className="px-4 py-4">
+              {bill.customerName || "-"}
+            </td>
 
-            <td className="px-4 py-3 text-sm text-right">
+            <td className="px-4 py-4 text-right">
               ₹{bill.discount ?? 0}
             </td>
 
-            <td className="px-4 py-3 text-sm text-right">
+            <td className="px-4 py-4 text-right">
               ₹{bill.gstAmount ?? 0}
             </td>
 
-            <td className="px-4 py-3 text-sm font-medium text-right">
+            <td className="px-4 py-4 font-medium text-right">
               ₹{bill.subtotal ?? 0}
             </td>
 
-            <td className="px-4 py-3 text-sm font-medium text-right">
+            <td className="px-4 py-4 font-semibold text-right">
               ₹{bill.total ?? 0}
             </td>
-            <td className="px-4 py-3 text-center">
-              <span
 
-                className={`px-2 py-1 text-xs rounded font-medium ${
+            <td className="px-4 py-4 text-center">
+              <span
+                className={`px-3 py-1 text-xs rounded-full font-medium ${
                   bill.status === "CANCELLED"
-                    ? "bg-red-100 text-red-700"
-                    : "bg-green-100 text-green-700"
+                    ? "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400"
+                    : "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400"
                 }`}
               >
                 {bill.status}
               </span>
             </td>
 
-            <td className="px-4 py-3 text-sm text-center">
+            <td className="px-4 py-4 text-center">
               <button
-               disabled={bill.status === "CANCELLED"}
+                disabled={bill.status === "CANCELLED"}
                 onClick={() => navigate(`/sales/${bill.id}`)}
-                className="text-blue-600 hover:underline font-medium"
+                className="
+                  p-2 rounded-md
+                  text-blue-600 dark:text-blue-400
+                  hover:bg-blue-100 dark:hover:bg-blue-500/20
+                  transition disabled:opacity-40
+                "
               >
-                View
+                <Eye size={16} />
               </button>
             </td>
           </tr>
         ))}
       </DataTable>
 
-      {/* Footer / Pagination */}
-      <div className="flex items-center justify-between mt-4">
-        <div className="flex gap-2 items-center">
+      {/* Pagination */}
+      <div className="flex items-center justify-between mt-6">
+
+        <div className="flex gap-3 items-center">
           <select
             value={size}
             onChange={(e) => {
               setPage(0);
               setSize(Number(e.target.value));
             }}
-            className="border px-2 py-2 rounded text-sm"
+            className="
+              rounded-lg px-3 py-2 text-sm
+              bg-white dark:bg-[#1f1f1f]
+              border border-gray-300 dark:border-gray-700
+            "
           >
             <option value={5}>5 / page</option>
             <option value={10}>10 / page</option>
             <option value={20}>20 / page</option>
           </select>
 
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
             Showing {totalElements === 0 ? 0 : startRecord}–{endRecord} of{" "}
             {totalElements}
           </span>
         </div>
 
         <div className="flex gap-1">
-          <button
-            onClick={() => setPage(0)}
-            disabled={page === 0}
-            className="px-2 py-1 border rounded disabled:opacity-50"
-          >
-            «
-          </button>
-
-          <button
-            onClick={() => setPage((p) => p - 1)}
-            disabled={page === 0}
-            className="px-2 py-1 border rounded disabled:opacity-50"
-          >
-            ‹
-          </button>
-
           {[...Array(totalPages)].map((_, i) => (
             <button
               key={i}
               onClick={() => setPage(i)}
-              className={`px-3 py-1 border rounded ${
-                i === page ? "bg-gray-200 font-medium" : ""
-              }`}
+              className={`
+                px-3 py-1.5 rounded-md text-sm transition
+                ${
+                  i === page
+                    ? "bg-primary text-black font-medium"
+                    : "bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700"
+                }
+              `}
             >
               {i + 1}
             </button>
           ))}
-
-          <button
-            onClick={() => setPage((p) => p + 1)}
-            disabled={page === totalPages - 1 || totalPages === 0}
-            className="px-2 py-1 border rounded disabled:opacity-50"
-          >
-            ›
-          </button>
-
-          <button
-            onClick={() => setPage(totalPages - 1)}
-            disabled={page === totalPages - 1 || totalPages === 0}
-            className="px-2 py-1 border rounded disabled:opacity-50"
-          >
-            »
-          </button>
         </div>
       </div>
     </div>

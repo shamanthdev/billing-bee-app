@@ -1,8 +1,22 @@
 import { useState } from "react";
 import PaymentModal from "./PaymentModal";
 
-const PaymentSection = ({ bill, onPaymentSuccess }) => {
-  const [showModal, setShowModal] = useState(false);
+interface Bill {
+  id: number;
+  status: "ACTIVE" | "PAID" | "CANCELLED";
+  // add more fields later if needed
+}
+
+interface PaymentSectionProps {
+  bill: Bill | null;
+  onPaymentSuccess?: () => void;
+}
+
+const PaymentSection: React.FC<PaymentSectionProps> = ({
+  bill,
+  onPaymentSuccess,
+}) => {
+  const [showModal, setShowModal] = useState<boolean>(false);
 
   // Show payment only if bill is ACTIVE
   if (!bill || bill.status !== "ACTIVE") {
@@ -10,7 +24,7 @@ const PaymentSection = ({ bill, onPaymentSuccess }) => {
   }
 
   return (
-     <div className="mt-6 flex justify-end">
+    <div className="mt-6 flex justify-end">
       <button
         onClick={() => setShowModal(true)}
         className="
@@ -34,7 +48,7 @@ const PaymentSection = ({ bill, onPaymentSuccess }) => {
           onClose={() => setShowModal(false)}
           onSuccess={() => {
             setShowModal(false);
-            onPaymentSuccess && onPaymentSuccess();
+            onPaymentSuccess?.();
           }}
         />
       )}

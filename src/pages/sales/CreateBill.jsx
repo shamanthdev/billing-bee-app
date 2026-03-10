@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { Trash2 } from "lucide-react";
 
 import { getActiveProducts } from "../../services/ProductService";
 import {
@@ -10,18 +11,17 @@ import {
 } from "../../services/BillService";
 import { getCustomers } from "../../services/CustomerService";
 import DataTable from "../../common/DataTable";
+import SelectOption from "../../common/SelectOption";
 
 export default function CreateSale() {
   const navigate = useNavigate();
   const { billId } = useParams();
   const isEdit = Boolean(billId);
 
-  /* -------------------- State -------------------- */
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
 
   const [customerId, setCustomerId] = useState("");
-
   const [selectedProductId, setSelectedProductId] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -29,17 +29,15 @@ export default function CreateSale() {
   const [billItems, setBillItems] = useState([]);
   const [discount, setDiscount] = useState(0);
 
-  /* -------------------- Load Initial Data -------------------- */
+  /* ---------------- Load ---------------- */
+
   useEffect(() => {
     loadProducts();
     loadCustomers();
   }, []);
 
-  /* -------------------- Load Bill (Edit Mode) -------------------- */
   useEffect(() => {
-    if (isEdit) {
-      loadBillForEdit();
-    }
+    if (isEdit) loadBillForEdit();
   }, [billId]);
 
   const loadProducts = async () => {
@@ -62,8 +60,7 @@ export default function CreateSale() {
 
   const loadBillForEdit = async () => {
     try {
-      const res = await getBillDetails(billId);
-      const bill = res;
+      const bill = await getBillDetails(billId);
 
       setCustomerId(bill.customerId);
       setDiscount(bill.discount || 0);
@@ -77,109 +74,60 @@ export default function CreateSale() {
           taxPercent: i.gstPercent,
           taxAmount: i.gstAmount,
           lineTotal: i.lineTotal,
-        }))
+        })),
       );
-    } catch (error) {
-      toast.error("Failed to load bill for edit");
+    } catch {
+      toast.error("Failed to load bill");
       navigate("/sales");
     }
   };
 
-  /* -------------------- Product Select -------------------- */
-  const handleProductChange = (e) => {
-    const productId = Number(e.target.value);
-    setSelectedProductId(productId);
+  /* ---------------- Handlers ---------------- */
 
-    const product = products.find((p) => p.id === productId);
-    setSelectedProduct(product || null);
+  const handleProductChange = (e) => {
+    const id = Number(e.target.value);
+    setSelectedProductId(id);
+    setSelectedProduct(products.find((p) => p.id === id));
   };
 
-  /* -------------------- Add Item -------------------- */
   const handleAddItem = () => {
     if (!selectedProduct || quantity < 1) return;
 
-    setBillItems((prev) => {
-      const existing = prev.find(
-        (i) => i.productId === selectedProduct.id
-      );
+    const price = selectedProduct.sellingPrice;
+    const taxPercent = selectedProduct.taxPercent || 0;
 
-      const price = selectedProduct.sellingPrice;
-      const taxPercent = selectedProduct.taxPercent || 0;
+    const lineTotal = price * quantity;
+    const taxAmount = (lineTotal * taxPercent) / 100;
 
-      if (existing) {
-        return prev.map((i) => {
-          if (i.productId !== selectedProduct.id) return i;
-
-          const newQty = i.quantity + quantity;
-          const lineTotal = newQty * price;
-          const taxAmount = (lineTotal * taxPercent) / 100;
-
-          return {
-            ...i,
-            quantity: newQty,
-            lineTotal,
-            taxAmount,
-          };
-        });
-      }
-
-      const lineTotal = price * quantity;
-      const taxAmount = (lineTotal * taxPercent) / 100;
-
-      return [
-        ...prev,
-        {
-          productId: selectedProduct.id,
-          productName: selectedProduct.name,
-          price,
-          quantity,
-          taxPercent,
-          taxAmount,
-          lineTotal,
-        },
-      ];
-    });
+    setBillItems((prev) => [
+      ...prev,
+      {
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        price,
+        quantity,
+        taxPercent,
+        taxAmount,
+        lineTotal,
+      },
+    ]);
 
     setSelectedProductId("");
     setSelectedProduct(null);
     setQuantity(1);
   };
 
-  /* -------------------- Remove Item -------------------- */
   const handleRemoveItem = (index) => {
     setBillItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  /* -------------------- Calculations -------------------- */
-  const subtotal = billItems.reduce(
-    (sum, item) => sum + item.lineTotal,
-    0
-  );
+  const subtotal = billItems.reduce((sum, i) => sum + i.lineTotal, 0);
+  const totalGst = billItems.reduce((sum, i) => sum + i.taxAmount, 0);
+  const total = subtotal - Number(discount || 0) + totalGst;
 
-  const totalGst = billItems.reduce(
-    (sum, item) => sum + item.taxAmount,
-    0
-  );
-
-  const total =
-    subtotal - Number(discount || 0) + totalGst;
-
-  /* -------------------- Cancel -------------------- */
-  const handleCancel = () => {
-    navigate(-1);
-  };
-
-  /* -------------------- Create / Update -------------------- */
   const handleSubmitSale = async () => {
-    if (!customerId) {
-      toast.error("Please select a customer");
-      return;
-    }
-
-    if (billItems.length === 0) {
-      toast.error("Add at least one item");
-      return;
-    }
+    if (!customerId) return toast.error("Please select customer");
+    if (!billItems.length) return toast.error("Add at least one item");
 
     const payload = {
       customerId,
@@ -200,101 +148,93 @@ export default function CreateSale() {
         toast.success("Sale created successfully");
         navigate("/sales");
       }
-    } catch (error) {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to save sale"
-      );
+    } catch {
+      toast.error("Failed to save sale");
     }
   };
 
-  /* -------------------- UI -------------------- */
-  return (
-    <div className="p-6 max-w-6xl">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h1 className="text-xl font-semibold">
-            {isEdit ? "Edit Sale" : "Create Sale"}
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {isEdit
-              ? "Update products and pricing"
-              : "Add products and generate a sales invoice"}
-          </p>
-        </div>
+  /* ---------------- UI ---------------- */
 
-        <button
-          onClick={handleCancel}
-          className="px-4 py-2 border rounded text-sm hover:bg-gray-100"
+  return (
+    <div className="max-w-7xl mx-auto">
+      {/* Breadcrumb */}
+      <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <span
+          onClick={() => navigate("/sales")}
+          className="cursor-pointer hover:underline"
         >
-          Cancel
-        </button>
+          Sales
+        </span>
+        <span className="mx-2">/</span>
+        <span className="font-medium text-gray-800 dark:text-gray-200">
+          {isEdit ? "Edit Sale" : "Create Sale"}
+        </span>
       </div>
 
-      {/* Customer */}
-      <div className="bg-white p-4 rounded shadow mb-6 max-w-4xl">
-        <label className="block text-sm font-medium mb-1">
+      {/* Page Title */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {isEdit ? "Edit Sale" : "Create Sale"}
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Add products and generate a professional invoice
+        </p>
+      </div>
+
+      {/* Customer Section */}
+      <div className="bg-white dark:bg-[#141414] border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
+        <label className="block text-sm font-medium mb-2">
           Customer <span className="text-red-500">*</span>
         </label>
 
-        <select
-          value={customerId}
-          onChange={(e) => setCustomerId(e.target.value)}
-          className="border rounded-md px-3 py-2 text-sm w-full"
-        >
-          <option value="">Select customer</option>
-          {customers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        <div className="w-full md:w-1/2 lg:w-1/3">
+          <SelectOption
+            value={customerId}
+            onChange={(val) => setCustomerId(val)}
+            placeholder="Select customer"
+            options={customers.map((c) => ({
+              label: c.name,
+              value: c.id,
+            }))}
+          />
+        </div>
       </div>
 
-      {/* Add Item */}
-      <div className="bg-white p-4 rounded shadow mb-6 max-w-4xl">
-        <h2 className="text-sm font-medium text-gray-700 mb-4">
+      {/* Add Item Section */}
+      <div className="bg-white dark:bg-[#141414] border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-5">
           Add Item
         </h2>
 
-        <div className="grid grid-cols-4 gap-4 items-end">
-          <select
+        <div className="grid md:grid-cols-4 gap-4 items-end">
+          <SelectOption
             value={selectedProductId}
-            onChange={handleProductChange}
-            className="border rounded-md px-3 py-2 text-sm"
-          >
-            <option value="">Select product</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => {
+              setSelectedProductId(val);
+              setSelectedProduct(products.find((p) => p.id === val));
+            }}
+            placeholder="Select product"
+            options={products.map((p) => ({
+              label: p.name,
+              value: p.id,
+            }))}
+          />
 
           <input
             type="number"
             min="1"
             value={quantity}
-            onChange={(e) =>
-              setQuantity(Number(e.target.value))
-            }
-            className="border rounded-md px-3 py-2 text-sm"
+            onChange={(e) => setQuantity(Number(e.target.value))}
+            className="px-4 py-2.5 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1f1f1f]"
           />
 
-          <div className="border rounded-md px-3 py-2 text-sm bg-gray-50">
-            <div className="text-xs text-gray-500">GST %</div>
-            <div className="font-medium">
-              {selectedProduct
-                ? `${selectedProduct.taxPercent ?? 0}%`
-                : "--"}
-            </div>
+          <div className="px-4 py-2.5 rounded-md bg-gray-100 dark:bg-[#1f1f1f] text-sm text-gray-600 dark:text-gray-300">
+            GST: {selectedProduct ? `${selectedProduct.taxPercent}%` : "--"}
           </div>
 
           <button
             onClick={handleAddItem}
-            disabled={!selectedProduct}
-            className="bg-yellow-400 hover:bg-yellow-500 text-black rounded-md px-4 py-2 font-medium disabled:opacity-40"
+            className="h-[42px] bg-primary hover:bg-primaryHover text-black font-medium rounded-md transition shadow-sm hover:shadow"
           >
             + Add
           </button>
@@ -309,29 +249,28 @@ export default function CreateSale() {
           { label: "Qty", align: "center" },
           { label: "GST", align: "right" },
           { label: "Total", align: "right" },
-          { label: "Action", align: "center" },
+          { label: "", align: "center" },
         ]}
         emptyText="No items added yet"
       >
         {billItems.map((item, index) => (
-          <tr key={index} className="border-b">
+          <tr
+            key={index}
+            className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-200 dark:hover:bg-[#202020] transition"
+          >
             <td className="px-4 py-3">{item.productName}</td>
             <td className="px-4 py-3 text-right">₹{item.price}</td>
-            <td className="px-4 py-3 text-center">
-              {item.quantity}
-            </td>
-            <td className="px-4 py-3 text-right">
-              {item.taxPercent}% (₹{item.taxAmount})
-            </td>
-            <td className="px-4 py-3 text-right">
+            <td className="px-4 py-3 text-center">{item.quantity}</td>
+            <td className="px-4 py-3 text-right">₹{item.taxAmount}</td>
+            <td className="px-4 py-3 text-right font-medium">
               ₹{item.lineTotal}
             </td>
             <td className="px-4 py-3 text-center">
               <button
                 onClick={() => handleRemoveItem(index)}
-                className="text-red-500 hover:underline"
+                className="p-2 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500 transition"
               >
-                Remove
+                <Trash2 size={16} />
               </button>
             </td>
           </tr>
@@ -339,37 +278,74 @@ export default function CreateSale() {
       </DataTable>
 
       {/* Summary */}
-      <div className="flex justify-end mt-6">
-        <div className="bg-white p-4 rounded shadow w-full max-w-md">
-          <div className="flex justify-between text-sm mb-2">
-            <span>Subtotal</span>
-            <span>₹{subtotal.toFixed(2)}</span>
-          </div>
+      {/* Bottom Section */}
+      <div className="mt-10">
+        {/* Summary Card - Full Width */}
+        <div className="bg-white dark:bg-[#141414] border border-gray-200 dark:border-gray-800 rounded-lg p-8">
+          <div className="max-w-md ml-auto space-y-4">
+            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+              <span>Subtotal</span>
+              <span>₹{subtotal.toFixed(2)}</span>
+            </div>
 
-          <div className="flex justify-between text-sm mb-2">
-            <span>GST</span>
-            <span>₹{totalGst.toFixed(2)}</span>
-          </div>
+            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+              <span>GST</span>
+              <span>₹{totalGst.toFixed(2)}</span>
+            </div>
 
-          <div className="flex justify-between text-sm mb-4">
-            <span>Discount</span>
-            <input
-              type="number"
-              min="0"
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
-              className="w-24 border rounded px-2 py-1 text-right"
-            />
-          </div>
+            <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+              <span>Discount</span>
+              <input
+                type="number"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+                className="
+            w-28 text-right px-3 py-1.5 rounded-md
+            border border-gray-300 dark:border-gray-700
+            bg-white dark:bg-[#1f1f1f]
+            focus:ring-2 focus:ring-primary
+            focus:outline-none
+          "
+              />
+            </div>
 
-          <div className="flex justify-between font-semibold text-lg mb-4">
-            <span>Total</span>
-            <span>₹{total.toFixed(2)}</span>
+            <div className="border-t border-dashed border-gray-300 dark:border-gray-700 pt-4 flex justify-between items-center">
+              <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                Total
+              </span>
+              <span className="text-2xl font-bold tracking-tight">
+                ₹{total.toFixed(2)}
+              </span>
+            </div>
           </div>
+        </div>
+
+        {/* Action Bar */}
+        <div className="flex justify-between items-center mt-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="
+        px-5 py-2.5
+        rounded-md
+        border border-gray-300 dark:border-gray-700
+        text-sm font-medium
+        hover:bg-gray-100 dark:hover:bg-gray-800
+        transition
+      "
+          >
+            Cancel
+          </button>
 
           <button
             onClick={handleSubmitSale}
-            className="w-full bg-black text-white py-2 rounded"
+            className="
+        px-8 py-2.5
+        rounded-md
+        bg-primary hover:bg-primaryHover
+        text-black font-semibold text-sm
+        shadow-sm hover:shadow-md
+        transition
+      "
           >
             {isEdit ? "Update Sale" : "Create Sale"}
           </button>
