@@ -17,6 +17,7 @@ export default function DataTable({
                 key={col.label}
                 className={clsx(
                   "px-4 py-3",
+                    col.align === "left" && "text-left",
                   col.align === "right" && "text-right",
                   col.align === "center" && "text-center",
                   !col.align && "text-left"

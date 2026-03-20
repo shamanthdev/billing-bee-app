@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HoneycombPattern from "../components/ui/HoneyCombPattern";
 import BillingBeeLogo from "../components/ui/BillingBeeLogo";
+import { forgotPassword, loginUser } from "../services/AuthService";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -12,7 +15,15 @@ const Login = () => {
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email || !password) {
@@ -20,14 +31,27 @@ const Login = () => {
       return;
     }
 
-    setError("");
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    setTimeout(() => {
+      const data = await loginUser({
+        email,
+        password,
+      });
+
+      // localStorage.setItem("user", JSON.stringify(data));
+      localStorage.setItem("token", data.token);
+      login(data.token);
+      navigate("/dashboard", { replace: true });
+
+    } catch (err) {
+      setError("Invalid email or password");
+    } finally {
       setLoading(false);
-      navigate("/dashboard");
-    }, 1200);
+    }
   };
+
+
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-black to-gray-900 overflow-hidden">
@@ -122,9 +146,18 @@ const Login = () => {
 
         {/* Footer */}
         <div className="text-center mt-6 space-y-4">
-          <button className="text-sm text-yellow-400 hover:underline">
+          <button type="button" onClick={() => navigate("/forgot-password")} className="text-sm text-yellow-400 hover:underline" >
             Forgot password?
           </button>
+          <p className="text-sm text-gray-400">
+            Don't have an account?{" "}
+            <button
+              onClick={() => navigate("/signup")}
+              className="text-yellow-400 hover:underline"
+            >
+              Sign up
+            </button>
+          </p>
 
           <div className="text-xs text-gray-500 flex items-center justify-center gap-2">
             <span>🔒</span>

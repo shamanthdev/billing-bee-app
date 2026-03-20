@@ -5,15 +5,25 @@ const api = axios.create({
 });
 
 export const setupAxiosInterceptors = (showLoader, hideLoader) => {
+
   api.interceptors.request.use(
     (config) => {
+
       showLoader();
+
+      // Attach token automatically
+      const token = localStorage.getItem("token");
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+
       return config;
     },
     (error) => {
       hideLoader();
       return Promise.reject(error);
-    },
+    }
   );
 
   api.interceptors.response.use(
@@ -23,8 +33,15 @@ export const setupAxiosInterceptors = (showLoader, hideLoader) => {
     },
     (error) => {
       hideLoader();
+
+      // Auto logout if token expired
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "/";
+      }
+
       return Promise.reject(error);
-    },
+    }
   );
 };
 

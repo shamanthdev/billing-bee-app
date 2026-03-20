@@ -8,8 +8,10 @@ import {
   CreditCard,
   LogOut,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Sidebar() {
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const menu = [
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -17,9 +19,13 @@ export default function Sidebar() {
     { name: "Sales", path: "/sales", icon: ShoppingCart },
     { name: "Customers", path: "/customers", icon: Users },
     { name: "Reports", path: "/reports", icon: BarChart3 },
-    { name: "Payments", path: "/payments", icon: CreditCard },
+    // { name: "Payments", path: "/payments", icon: CreditCard },
   ];
 
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
   return (
     <div className="fixed left-0 top-0 h-screen w-64 bg-white dark:bg-[#111827] border-r border-gray-200 dark:border-gray-800 flex flex-col">
       {/* Logo */}
@@ -39,10 +45,9 @@ export default function Sidebar() {
               to={item.path}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all
-                ${
-                  isActive
-                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                ${isActive
+                  ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`
               }
             >
@@ -55,8 +60,11 @@ export default function Sidebar() {
 
       {/* Logout */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-        <button className="flex items-center gap-3 text-sm text-red-600 dark:text-red-400 hover:opacity-80 transition">
-          <LogOut size={18} onClick={() => navigate("/")} />
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 text-sm text-red-600 dark:text-red-400 hover:opacity-80 transition"
+        >
+          <LogOut size={18} />
           Logout
         </button>
       </div>

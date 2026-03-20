@@ -37,3 +37,6 @@ export const createBill = async (payload) => {
   return response.data; // billId
 };
 
+export const getLowStockProducts = async () => {
+  return api.get("/products/low-stock");
+};

@@ -14,6 +14,7 @@ export default function ProductFormPanel({
 
   const [form, setForm] = useState({
     name: "",
+    productCode: "",
     sellingPrice: "",
     costPrice: "",
     stockQuantity: "",
@@ -26,6 +27,7 @@ export default function ProductFormPanel({
     if (product) {
       setForm({
         name: product.name || "",
+        sku: product.productCode || "",
         sellingPrice: product.sellingPrice || "",
         costPrice: product.costPrice || "",
         stockQuantity: product.stockQuantity || "",
@@ -49,6 +51,7 @@ export default function ProductFormPanel({
       stockQuantity,
       gstPercent,
       hsnCode,
+      productCode,
     } = form;
 
     if (
@@ -56,8 +59,8 @@ export default function ProductFormPanel({
       !sellingPrice ||
       !costPrice ||
       !stockQuantity ||
-      !gstPercent ||
-      !hsnCode
+      !gstPercent 
+     
     ) {
       toast.error("Please fill all required fields");
       return;
@@ -65,6 +68,7 @@ export default function ProductFormPanel({
 
     const payload = {
       name,
+      sku: productCode || "",
       sellingPrice: Number(sellingPrice),
       costPrice: Number(costPrice),
       stockQuantity: Number(stockQuantity),
@@ -163,10 +167,31 @@ export default function ProductFormPanel({
             />
           </div>
 
+            {/* HSN */}
+          <div>
+            <label className="block mb-1 text-gray-600 dark:text-gray-400">
+            Product Code (Optional)
+            </label>
+            <input
+              name="productCode"
+              value={form.productCode}
+              onChange={handleChange}
+              className="
+  w-full rounded-lg px-4 py-2.5 text-sm
+  bg-gray-50 dark:bg-[#1c1c1c]
+  border border-gray-300 dark:border-gray-700
+  placeholder:text-gray-400 dark:placeholder:text-gray-500
+  focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
+  transition duration-200
+  hover:border-gray-400 dark:hover:border-gray-600
+"
+            />
+          </div>
+
           {/* HSN */}
           <div>
             <label className="block mb-1 text-gray-600 dark:text-gray-400">
-              HSN Code *
+              HSN Code (Optional)
             </label>
             <input
               name="hsnCode"
@@ -323,7 +348,7 @@ export default function ProductFormPanel({
   transition duration-200 disabled:opacity-50
 "
           >
-            {loading ? "Saving..." : isEdit ? "Update Product" : "Add Product"}
+            {loading ? "Saving..." : isEdit ? "Confirm" : "Save"}
           </button>
         </div>
       </div>

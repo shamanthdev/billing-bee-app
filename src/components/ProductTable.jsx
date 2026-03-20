@@ -14,6 +14,7 @@ export default function ProductTable({ products, onEdit, onDisable, onView }) {
       <table className="w-full text-sm">
         <thead className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 uppercase text-xs">
           <tr>
+            <th className="px-6 py-4 text-left">Product ID</th>
             <th className="px-6 py-4 text-left">Product</th>
             <th className="px-6 py-4 text-right">Price</th>
             <th className="px-6 py-4 text-center">Stock</th>
@@ -29,6 +30,7 @@ export default function ProductTable({ products, onEdit, onDisable, onView }) {
               key={p.id}
               className="border-t border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
             >
+              <td className="px-6 py-4 font-medium">{p.sku}</td>
               <td className="px-6 py-4 font-medium">{p.name}</td>
 
               <td className="px-6 py-4 text-right text-yellow-600 font-semibold">

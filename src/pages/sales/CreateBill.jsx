@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Trash2 } from "lucide-react";
+import { CloudCog, Trash2 } from "lucide-react";
 
 import { getActiveProducts } from "../../services/ProductService";
 import {
@@ -30,6 +30,7 @@ export default function CreateSale() {
   const [discount, setDiscount] = useState(0);
 
   /* ---------------- Load ---------------- */
+  console.log("CreateSale loaded",products);
 
   useEffect(() => {
     loadProducts();
@@ -43,7 +44,7 @@ export default function CreateSale() {
   const loadProducts = async () => {
     try {
       const data = await getActiveProducts();
-      setProducts(data);
+      setProducts(data?.data);
     } catch {
       toast.error("Failed to load products");
     }

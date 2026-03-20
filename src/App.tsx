@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
-import Products from "./pages/Products";
+import Products from "./pages/product/Products";
 import CreateBill from "./pages/sales/CreateBill";
 import Login from "./pages/Login";
 import Bills from "./pages/sales/Bills";
@@ -13,6 +13,13 @@ import { LoaderProvider } from "./common/Loader";
 import AxiosLoaderSetup from "./common/AxiosLoaderSetup";
 import MainLayout from "./layouts/MainLayout";
 import SalesReport from "./pages/reports/SalesReport";
+import Signup from "./pages/SignUp";
+import PublicRoute from "./components/PublicRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
+import SalesDashboard from "./pages/dashboard/Dashboard";
+// import ForgotPassword from "./pages/auth/ForgotPassword";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 function App() {
   return (
@@ -30,13 +37,40 @@ function App() {
             },
           }}
         />
-
         <Routes>
-          {/* Login (Standalone) */}
-          <Route path="/" element={<Dashboard />} />
 
-          {/* Main App Layout */}
-          <Route element={<MainLayout />}>
+          {/* Public (blocked if logged in) */}
+          <Route
+            path="/"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+
+          <Route
+            path="/signup"
+            element={
+              <PublicRoute>
+                <Signup />
+              </PublicRoute>
+            }
+          />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* Protected */}
+          <Route
+           element={
+    <ProtectedRoute>
+      <MainLayout />
+    </ProtectedRoute>
+  }
+          >
+            
+
+            {/* <Route path="/dashboard" element={<SalesDashboard />} /> */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/products" element={<Products />} />
             <Route path="/sales" element={<Bills />} />
@@ -44,11 +78,13 @@ function App() {
             <Route path="/sales/:id" element={<BillDetails />} />
             <Route path="/sales/edit-bill/:billId" element={<CreateBill />} />
             <Route path="/customers" element={<CustomerListPage />} />
-            <Route path="/reports/sales" element={<SalesReport />} />
+            <Route path="/reports" element={<SalesReport />} />
+            
+
           </Route>
 
-          {/* 404 */}
           <Route path="*" element={<Navigate to="/" />} />
+
         </Routes>
       </BrowserRouter>
     </LoaderProvider>

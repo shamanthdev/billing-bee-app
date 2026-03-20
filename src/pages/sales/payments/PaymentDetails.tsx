@@ -73,7 +73,7 @@ const PaymentDetails: React.FC<PaymentDetailsProps> = ({
 
   return (
     <div className="
-      mt-6
+   
       rounded-lg
       border
       border-green-200

@@ -86,7 +86,7 @@ export default function CustomerListPage() {
   /* ---------------- UI ---------------- */
 
   return (
-    <div className=" bg-white dark:bg-slate-900 min-h-screen transition-colors">
+    <div className=" dark:bg-slate-900 min-h-screen transition-colors">
       <LoadingOverlay show={loading} />
 
       {/* Header */}
