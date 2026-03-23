@@ -1,19 +1,27 @@
-import { getAlignClass } from "../helper/helper";
+import clsx from "clsx";
 
-export default function DataTable({ columns, children, emptyText }) {
+export default function DataTable({
+  columns,
+  children,
+  emptyText,
+}) {
   return (
-    <div className="bg-white border rounded-md overflow-hidden">
-      <table className="w-full border-collapse table-fixed">
-        <thead className="bg-gray-50 border-b">
+    <div className="bg-surface dark:bg-surfaceDark border border-borderLight dark:border-borderDark rounded-xl overflow-hidden shadow-soft">
+
+      <table className="w-full text-sm">
+
+        <thead className="bg-gray-50 dark:bg-[#1f1f1f] text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
           <tr>
             {columns.map((col) => (
               <th
                 key={col.label}
-                className={`
-                  px-4 py-3
-                  text-xs font-semibold text-gray-600 uppercase
-                  ${getAlignClass(col.align)}
-                `}
+                className={clsx(
+                  "px-4 py-3",
+                    col.align === "left" && "text-left",
+                  col.align === "right" && "text-right",
+                  col.align === "center" && "text-center",
+                  !col.align && "text-left"
+                )}
               >
                 {col.label}
               </th>
@@ -28,15 +36,15 @@ export default function DataTable({ columns, children, emptyText }) {
             <tr>
               <td
                 colSpan={columns.length}
-                className="text-center py-8 text-gray-500"
+                className="text-center py-12 text-gray-500 dark:text-gray-400"
               >
                 {emptyText || "No data found"}
               </td>
             </tr>
           )}
         </tbody>
+
       </table>
     </div>
   );
 }
-

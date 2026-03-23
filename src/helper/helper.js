@@ -31,7 +31,7 @@ export function breadcrumb(bill, navigate) {
   
       <div className="flex items-center text-sm text-gray-500 mb-4">
         <span
-          onClick={() => navigate("/sales")}
+       
           className="cursor-pointer hover:underline text-gray-600"
         >
           Sales
