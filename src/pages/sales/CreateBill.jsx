@@ -12,6 +12,7 @@ import {
 import { getCustomers } from "../../services/CustomerService";
 import DataTable from "../../common/DataTable";
 import SelectOption from "../../common/SelectOption";
+import api from "../../api/axios";
 
 export default function CreateSale() {
   const navigate = useNavigate();
@@ -20,7 +21,8 @@ export default function CreateSale() {
 
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
-
+  // const [customerId, setCustomerId] = useState(null);
+  const [phone, setPhone] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [selectedProductId, setSelectedProductId] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -28,9 +30,10 @@ export default function CreateSale() {
 
   const [billItems, setBillItems] = useState([]);
   const [discount, setDiscount] = useState(0);
+  const [paymentType, setPaymentType] = useState("PAID");
 
   /* ---------------- Load ---------------- */
-  console.log("CreateSale loaded",products);
+  console.log("CreateSale loaded", products);
 
   useEffect(() => {
     loadProducts();
@@ -65,7 +68,11 @@ export default function CreateSale() {
 
       setCustomerId(bill.customerId);
       setDiscount(bill.discount || 0);
+      // ✅ ADD THIS LOGIC
+      const paymentType =
+        Number(bill.total) > 0 ? "CREDIT" : "PAID";
 
+      setPaymentType(paymentType);
       setBillItems(
         bill.items.map((i) => ({
           productId: i.productId,
@@ -124,15 +131,24 @@ export default function CreateSale() {
 
   const subtotal = billItems.reduce((sum, i) => sum + i.lineTotal, 0);
   const totalGst = billItems.reduce((sum, i) => sum + i.taxAmount, 0);
-  const total = subtotal - Number(discount || 0) + totalGst;
+  const discountPercent = Number(discount || 0);
+  const discountAmount = (subtotal * discountPercent) / 100;
+
+  const total = subtotal - discountAmount + totalGst;
+  // const total = subtotal - Number(discount || 0) + totalGst;
 
   const handleSubmitSale = async () => {
-    if (!customerId) return toast.error("Please select customer");
+    if (!customerId && !phone) {
+      return toast.error("Select customer or enter phone number");
+    }
     if (!billItems.length) return toast.error("Add at least one item");
 
     const payload = {
-      customerId,
-      discount: Number(discount || 0),
+      customerId: customerId || null,
+      phoneNumber: phone || null, // NEW
+      discount: discountAmount,
+      paymentType, //NEW (RECEIVED / CREDIT)
+
       items: billItems.map((i) => ({
         productId: i.productId,
         quantity: i.quantity,
@@ -155,6 +171,25 @@ export default function CreateSale() {
   };
 
   /* ---------------- UI ---------------- */
+
+
+  const handlePhoneChange = async (value) => {
+    setPhone(value);
+    setCustomerId(null);
+
+    if (value.length === 10) {
+      try {
+        const res = await api.get(`/customers/by-phone/${value}`);
+
+        if (res.data) {
+          setCustomerId(res.data.id);
+          setPhone("");
+        }
+      } catch (err) {
+        // not found → ignore
+      }
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -183,21 +218,44 @@ export default function CreateSale() {
       </div>
 
       {/* Customer Section */}
+      {/* Customer Section */}
       <div className="bg-white dark:bg-[#141414] border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
         <label className="block text-sm font-medium mb-2">
           Customer <span className="text-red-500">*</span>
         </label>
 
-        <div className="w-full md:w-1/2 lg:w-1/3">
-          <SelectOption
-            value={customerId}
-            onChange={(val) => setCustomerId(val)}
-            placeholder="Select customer"
-            options={customers.map((c) => ({
-              label: c.name,
-              value: c.id,
-            }))}
-          />
+        <div className="flex gap-4 flex-col md:flex-row md:items-center">
+
+          {/* Existing dropdown */}
+          <div className="w-full md:w-1/2 lg:w-1/3">
+            <SelectOption
+              value={customerId}
+              onChange={(val) => {
+                setCustomerId(val);
+                setPhone(""); // clear phone if customer selected
+              }}
+              placeholder="Select customer"
+              options={customers.map((c) => ({
+                label: c.name,
+                value: c.id,
+              }))}
+            />
+          </div>
+
+          {/* 🔥 NEW phone input */}
+          <div className="w-full md:w-1/2 lg:w-1/3">
+            <input
+              type="text"
+              placeholder="Enter phone (walk-in)"
+              value={phone}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                setCustomerId(null); // clear dropdown if phone entered
+              }}
+              className="w-full px-3 py-2 border rounded-md bg-white dark:bg-[#1f1f1f] border-gray-300 dark:border-gray-700"
+            />
+          </div>
+
         </div>
       </div>
 
@@ -250,7 +308,7 @@ export default function CreateSale() {
           { label: "Qty", align: "center" },
           { label: "GST", align: "right" },
           { label: "Total", align: "right" },
-          { label: "", align: "center" },
+          { label: "Delete", align: "center" },
         ]}
         emptyText="No items added yet"
       >
@@ -295,19 +353,50 @@ export default function CreateSale() {
             </div>
 
             <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
-              <span>Discount</span>
+              <span>Discount (%)</span>
+
               <input
                 type="number"
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
                 className="
-            w-28 text-right px-3 py-1.5 rounded-md
-            border border-gray-300 dark:border-gray-700
-            bg-white dark:bg-[#1f1f1f]
-            focus:ring-2 focus:ring-primary
-            focus:outline-none
-          "
+      w-28 text-right px-3 py-1.5 rounded-md
+      border border-gray-300 dark:border-gray-700
+      bg-white dark:bg-[#1f1f1f]
+      focus:ring-2 focus:ring-primary
+      focus:outline-none
+    "
+                placeholder="%"
               />
+              <div className="flex justify-between text-xs text-gray-400">
+                <span></span>
+                <span className="text-gray-400 text-xs">
+                  (-₹{discountAmount.toFixed(2)})
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-4 mt-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="paymentType"
+                  value="PAID"
+                  checked={paymentType === "PAID"}
+                  onChange={() => setPaymentType("PAID")}
+                />
+                Paid
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="paymentType"
+                  value="CREDIT"
+                  checked={paymentType === "CREDIT"}
+                  onChange={() => setPaymentType("CREDIT")}
+                />
+                Pending
+              </label>
             </div>
 
             <div className="border-t border-dashed border-gray-300 dark:border-gray-700 pt-4 flex justify-between items-center">
@@ -315,7 +404,7 @@ export default function CreateSale() {
                 Total
               </span>
               <span className="text-2xl font-bold tracking-tight">
-                ₹{total.toFixed(2)}
+                ₹{paymentType === "PAID" ? "0.00" : total.toFixed(2)}
               </span>
             </div>
           </div>

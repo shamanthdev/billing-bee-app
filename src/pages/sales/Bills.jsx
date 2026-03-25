@@ -93,131 +93,143 @@ export default function Bills() {
       </div>
 
       {/* Table */}
-      <DataTable
-        columns={[
-          { label: "Bill No", align: "left" },
-          { label: "Date", align: "left" },
-          { label: "Customer", align: "left" },
-          { label: "Discount", align: "right" },
-          { label: "GST", align: "right" },
-          { label: "Subtotal", align: "right" },
-          { label: "Total", align: "right" },
-          { label: "Status", align: "center" },
-          { label: "Action", align: "center" },
-        ]}
-        emptyText="No bills found"
-      >
-        {bills.map((bill) => (
-          <tr
-            key={bill.id}
-            className="
+      <div className="w-full overflow-hidden px-2">
+        <DataTable
+          columns={[
+            { label: "Bill No", align: "left" },
+            { label: "Date", align: "left" },
+            { label: "Customer", align: "left" },
+            { label: "Discount", align: "right" },
+            { label: "GST", align: "right" },
+            { label: "Subtotal", align: "right" },
+            { label: "Total", align: "right" },
+            { label: "Status", align: "center" },
+            { label: "Payment Type", align: "center" },
+            { label: "Action", align: "center" },
+          ]}
+          emptyText="No bills found"
+        >
+          {bills.map((bill) => (
+            <tr
+              key={bill.id}
+              className="
               border-b border-gray-200 dark:border-gray-800
-              hover:bg-gray-200 dark:hover:bg-[#202020]
-              transition duration-200
+              hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition duration-200 last:border-none
             "
-          >
-            <td className="px-4 py-4 font-medium">
-              {bill.billNumber}
-            </td>
+            >
+              <td className="px-4 py-4 font-medium whitespace-nowrap">
+                {bill.billNumber}
+              </td>
 
-            <td className="px-4 py-4 text-gray-500 dark:text-gray-400">
-              {dateViewFormating(bill.billDate)}
-            </td>
+              <td className="px-4 py-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                {dateViewFormating(bill.billDate)}
+              </td>
 
-            <td className="px-4 py-4">
-              {bill.customerName || "-"}
-            </td>
+              <td className="px-4 py-4 whitespace-nowrap">
+                {bill.customerName || "-"}
+              </td>
 
-            <td className="px-4 py-4 text-right">
-              ₹{bill.discount ?? 0}
-            </td>
+              <td className="px-4 py-4 text-right">
+                ₹{bill.discount ?? 0}
+              </td>
 
-            <td className="px-4 py-4 text-right">
-              ₹{bill.gstAmount ?? 0}
-            </td>
+              <td className="px-4 py-4 text-right">
+                ₹{bill.gstAmount ?? 0}
+              </td>
 
-            <td className="px-4 py-4 font-medium text-right">
-              ₹{bill.subtotal ?? 0}
-            </td>
+              <td className="px-4 py-4 font-medium text-right">
+                ₹{bill.subtotal ?? 0}
+              </td>
 
-            <td className="px-4 py-4 font-semibold text-right">
-              ₹{bill.total ?? 0}
-            </td>
+              <td className="px-4 py-4 font-semibold text-right">
+                ₹{bill.total ?? 0}
+              </td>
 
-            <td className="px-4 py-4 text-center">
-              <span
-                className={`px-3 py-1 text-xs rounded-full font-medium ${
-                  bill.status === "CANCELLED"
-                    ? "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400"
+
+              <td className="px-4 py-3 text-center">
+                <span
+                  className={`px-3 py-1 text-xs rounded-full font-medium ${bill.status === "CANCELLED"
+                    ? "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
                     : "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400"
-                }`}
-              >
-                {bill.status}
-              </span>
-            </td>
+                    }`}
+                >
+                  {bill.status}
+                </span>
+              </td>
 
-            <td className="px-4 py-4 text-center">
-              <button
-                disabled={bill.status === "CANCELLED"}
-                onClick={() => navigate(`/sales/${bill.id}`)}
-                className="
+              <td className="px-4 py-3 text-center">
+                <span
+                  className={`px-3 py-1 text-xs rounded-full font-medium ${bill.paymentType === "PENDING"
+                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400"
+                    : "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400"
+                    }`}
+                >
+                  {bill.paymentType}
+                </span>
+              </td>
+
+              <td className="px-4 py-4 text-center">
+                <button
+                  disabled={bill.status === "CANCELLED"}
+                  onClick={() => navigate(`/sales/${bill.id}`)}
+                  className="
                   p-2 rounded-md
                   text-blue-600 dark:text-blue-400
                   hover:bg-blue-100 dark:hover:bg-blue-500/20
                   transition disabled:opacity-40
                 "
-              >
-                <Eye size={16} />
-              </button>
-            </td>
-          </tr>
-        ))}
-      </DataTable>
+                >
+                  <Eye size={16} />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </DataTable>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between mt-6">
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-6">
 
-        <div className="flex gap-3 items-center">
-          <select
-            value={size}
-            onChange={(e) => {
-              setPage(0);
-              setSize(Number(e.target.value));
-            }}
-            className="
+          <div className="flex gap-3 items-center">
+            <select
+              value={size}
+              onChange={(e) => {
+                setPage(0);
+                setSize(Number(e.target.value));
+              }}
+              className="
               rounded-lg px-3 py-2 text-sm
               bg-white dark:bg-[#1f1f1f]
               border border-gray-300 dark:border-gray-700
             "
-          >
-            <option value={5}>5 / page</option>
-            <option value={10}>10 / page</option>
-            <option value={20}>20 / page</option>
-          </select>
+            >
+              <option value={5}>5 / page</option>
+              <option value={10}>10 / page</option>
+              <option value={20}>20 / page</option>
+            </select>
 
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {totalElements === 0 ? 0 : startRecord}–{endRecord} of{" "}
-            {totalElements}
-          </span>
-        </div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {totalElements === 0 ? 0 : startRecord}–{endRecord} of{" "}
+              {totalElements}
+            </span>
+          </div>
 
-        <div className="flex gap-1">
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setPage(i)}
-              className={`
+          <div className="flex gap-1">
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i)}
+                className={`
                 px-3 py-1.5 rounded-md text-sm transition
-                ${
-                  i === page
+                ${i === page
                     ? "bg-primary text-black font-medium"
                     : "bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700"
-                }
+                  }
               `}
-            >
-              {i + 1}
-            </button>
-          ))}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

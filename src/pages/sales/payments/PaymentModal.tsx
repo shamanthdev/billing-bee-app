@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import toast from "react-hot-toast";
 import { createPayment } from "../../../services/PaymentService";
+import { payBill } from "../../../services/BillService";
 
 interface PaymentModalProps {
   bill: any; // refine later
@@ -17,6 +18,9 @@ export default function PaymentModal({
 }: PaymentModalProps) {
   const [paymentMode, setPaymentMode] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [amount, setAmount] = useState(
+    bill?.balanceAmount || 0
+  );
 
   const handleConfirm = async () => {
     if (!paymentMode) {
@@ -24,20 +28,22 @@ export default function PaymentModal({
       return;
     }
 
+    if (amount > bill.balanceAmount) {
+      toast.error(`Max allowed: ₹${bill.balanceAmount}`);
+      return;
+    }
     try {
       setLoading(true);
 
-      await createPayment({
-        billId: bill.id,
-        paymentMode,
-        amount: bill.total,
-      });
+      await payBill(bill.id, Number(bill.total));
 
       toast.success("Payment successful");
-      onSuccess();
+
+      onSuccess(); // refresh list
+      onClose();   // close modal
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || "Payment failed"
+        err?.message || "Payment failed"
       );
     } finally {
       setLoading(false);
@@ -126,6 +132,30 @@ export default function PaymentModal({
             Amount
           </label>
           <input
+            type="number"
+             className="
+              w-full
+              rounded-lg
+              border border-gray-200 dark:border-white/10
+              bg-gray-100 dark:bg-slate-800
+              px-3 py-2.5
+              text-sm
+              text-gray-700 dark:text-gray-300
+              cursor-not-allowed
+            "
+            value={amount}
+            max={bill.balanceAmount}   // 🔥 IMPORTANT
+            onChange={(e) => {
+              const val = Number(e.target.value);
+
+              if (val > bill.balanceAmount) {
+                setAmount(bill.balanceAmount);
+              } else {
+                setAmount(val);
+              }
+            }}
+          />
+          {/* <input
             value={`₹ ${bill.total}`}
             disabled
             className="
@@ -138,7 +168,7 @@ export default function PaymentModal({
               text-gray-700 dark:text-gray-300
               cursor-not-allowed
             "
-          />
+          /> */}
         </div>
 
         {/* Actions */}

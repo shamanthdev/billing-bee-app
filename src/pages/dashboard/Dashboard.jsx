@@ -10,27 +10,51 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TrendingUp, Wallet, Receipt } from "lucide-react";
-import { getSalesDashboard, getLowStockProducts } from "../../services/DashboardService";
+import {
+  getSalesDashboard,
+  getLowStockProducts,
+  getDashboard
+} from "../../services/DashboardService";
+
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function SalesDashboard() {
   const [data, setData] = useState(null);
+  const [summary, setSummary] = useState({
+    totalReceived: 0,
+    totalPending: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(false);
   const [lowStock, setLowStock] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
-    loadDashboard();
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
   }, []);
 
-
+  useEffect(() => {
+    loadDashboard();
+  }, []);
   const loadDashboard = async () => {
     try {
       const res = await getSalesDashboard();
       const lowStockRes = await getLowStockProducts();
+      const summaryRes = await getDashboard();
+
       setData(res?.data || res);
       setLowStock(lowStockRes?.data || lowStockRes);
+      setSummary(summaryRes?.data || summaryRes);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load dashboard");
@@ -39,7 +63,21 @@ export default function SalesDashboard() {
     }
   };
 
-  if (loading) return <div className="p-8">Loading dashboard...</div>;
+  if (loading) {
+    return (
+      <div className="p-8 space-y-6 animate-pulse">
+        <div className="h-8 w-48 bg-gray-300 dark:bg-gray-700 rounded"></div>
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-800 rounded-xl"></div>
+          ))}
+        </div>
+
+        <div className="h-72 bg-gray-200 dark:bg-gray-800 rounded-xl"></div>
+      </div>
+    );
+  }
   if (!data) return <div className="p-8 text-red-500">Dashboard failed</div>;
 
   const axisColor = isDark ? "#CBD5F5" : "#6B7280";
@@ -54,7 +92,23 @@ export default function SalesDashboard() {
       </h1>
 
       {/* KPI CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+
+        <KpiCard
+          title="Total Received"
+          value={summary.totalReceived || 0}
+          icon={<Wallet size={18} />}
+          color="green"
+          highlight={summary.totalReceived > 0}
+        />
+
+        <KpiCard
+          title="Total Pending"
+          value={summary.totalPending || 0}
+          icon={<TrendingUp size={18} />}
+          color="orange"
+          highlight={summary.totalPending > 0}
+        />
 
         <KpiCard
           title="Total Sales"
@@ -79,12 +133,24 @@ export default function SalesDashboard() {
 
       {/* SALES CHART */}
       <SectionCard title="Sales Trend">
+
+        <p className="text-sm text-gray-400 mb-4">
+          Last 7 days sales performance 📈
+        </p>
+
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={data.dailySales || []}>
+
+            <defs>
+              <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#FACC15" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="#FACC15" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+
             <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
 
             <XAxis dataKey="date" stroke={axisColor} />
-
             <YAxis stroke={axisColor} />
 
             <Tooltip
@@ -99,19 +165,34 @@ export default function SalesDashboard() {
               type="monotone"
               dataKey="sales"
               stroke="#FACC15"
+              fill="url(#colorSales)"
               strokeWidth={3}
               dot={{ r: 4 }}
               activeDot={{ r: 6 }}
             />
+
           </LineChart>
         </ResponsiveContainer>
       </SectionCard>
 
       {/* RECENT BILLS */}
-      <SectionCard title="Recent Bills">
+      <SectionCard title={
+        <div className="flex justify-between items-center">
+          <span>Recent Bills</span>
+
+          <button
+            onClick={() => navigate("/sales")}
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            View All →
+          </button>
+        </div>
+      }>
 
         {data.recentBills?.length === 0 ? (
-          <p className="text-gray-400">No recent bills</p>
+          <p className="text-gray-400 text-center py-6">
+            No recent bills yet 🚀
+          </p>
         ) : (
 
           <table className="w-full text-sm">
@@ -124,11 +205,11 @@ export default function SalesDashboard() {
             </thead>
 
             <tbody>
-
               {data.recentBills.map((bill, index) => (
                 <tr
                   key={index}
-                  className="border-b border-gray-100 dark:border-slate-800"
+                  className="border-b border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition cursor-pointer"
+                  onClick={() => navigate(`/sales/${bill.id}`)}
                 >
                   <td className="py-3 font-medium">
                     {bill.billNumber}
@@ -139,11 +220,10 @@ export default function SalesDashboard() {
                   </td>
 
                   <td className="text-right font-semibold">
-                    ₹{bill.totalAmount.toLocaleString()}
+                    ₹ {Number(bill.totalAmount || 0).toLocaleString()}
                   </td>
                 </tr>
               ))}
-
             </tbody>
           </table>
 
@@ -151,10 +231,13 @@ export default function SalesDashboard() {
 
       </SectionCard>
 
+      {/* LOW STOCK */}
       <SectionCard title="Low Stock Products">
 
         {lowStock.length === 0 ? (
-          <p className="text-gray-400">All products are well stocked</p>
+          <p className="text-gray-400 text-center py-6">
+            All products are well stocked ✅
+          </p>
         ) : (
 
           <table className="w-full text-sm">
@@ -166,47 +249,56 @@ export default function SalesDashboard() {
             </thead>
 
             <tbody>
-
               {lowStock.map((product) => (
                 <tr
                   key={product.id}
                   className="border-b border-gray-100 dark:border-slate-800"
-                >
 
+                >
                   <td className="py-3 font-medium">
                     {product.name}
                   </td>
 
-                  <td className="text-right text-red-500 font-semibold">
-                    {product.stockQuantity}
+                  <td className="text-right">
+                    <span className="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-semibold">
+                      {product.stockQuantity} left
+                    </span>
                   </td>
 
                 </tr>
               ))}
-
             </tbody>
           </table>
 
         )}
 
       </SectionCard>
-      {/* <SalesDashboard /> */}
+
     </div>
   );
 }
 
-function KpiCard({ title, value, icon, isCurrency = true }) {
+/* ==================== KPI CARD ==================== */
+function KpiCard({ title, value, icon, isCurrency = true, color = "yellow", highlight = false }) {
+
+  const colorMap = {
+    yellow: "bg-yellow-100 text-yellow-600 dark:bg-yellow-500/10 dark:text-yellow-400",
+    green: "bg-green-100 text-green-600 dark:bg-green-500/10 dark:text-green-400",
+    orange: "bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400",
+  };
+
   return (
-    <div className="
-      bg-white
-      dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-800
-      border border-gray-200 dark:border-slate-800
-      rounded-xl
-      p-6
-      shadow-sm
-      transition
-      hover:shadow-md
-    ">
+    <div className={`
+  bg-white
+  dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-800
+  border border-gray-200 dark:border-slate-800
+  rounded-xl
+  p-6
+  shadow-sm
+  hover:shadow-lg hover:-translate-y-1
+  transition-all duration-300
+  ${highlight ? "ring-1 ring-orange-500/40" : ""}
+`}>
 
       <div className="flex justify-between items-start">
 
@@ -216,19 +308,12 @@ function KpiCard({ title, value, icon, isCurrency = true }) {
           </p>
 
           <p className="text-2xl font-semibold mt-2 text-gray-900 dark:text-white">
-            {isCurrency && "₹"}
-            <CountUp end={value} duration={1.5} separator="," />
+            {isCurrency && "₹ "}
+            <CountUp end={value || 0} duration={1.5} separator="," />
           </p>
         </div>
 
-        <div className="
-          bg-yellow-100
-          dark:bg-yellow-500/10
-          text-yellow-600
-          dark:text-yellow-400
-          p-2
-          rounded-lg
-        ">
+        <div className={`p-2 rounded-lg ${colorMap[color]}`}>
           {icon}
         </div>
 
@@ -238,6 +323,7 @@ function KpiCard({ title, value, icon, isCurrency = true }) {
   );
 }
 
+/* ==================== SECTION CARD ==================== */
 function SectionCard({ title, children }) {
   return (
     <div className="

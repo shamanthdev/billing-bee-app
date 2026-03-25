@@ -1,34 +1,49 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
+type User = {
+  token: string;
+  email: string;
+  name: string;
+  businessName: string;
+  address: string;
+  phone: string;
+  gstNumber: string;
+};
+
 type AuthContextType = {
   isAuthenticated: boolean;
-  login: (token: string) => void;
+  login: (data: User) => void;
   logout: () => void;
-  userDetails: any;
+  userDetails: User | null;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userDetails, setUserDetails] = useState<any>(null);
+  const [userDetails, setUserDetails] = useState<User | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const userDetails = localStorage.getItem("user");
-    
+    const user = localStorage.getItem("user");
+
     setIsAuthenticated(!!token);
-    setUserDetails(userDetails ? JSON.parse(userDetails) : null);
+    setUserDetails(user ? JSON.parse(user) : null);
   }, []);
 
-  const login = (token: string) => {
-    localStorage.setItem("token", token);
+  // 🔥 UPDATED LOGIN
+  const login = (data: User) => {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data));
+
     setIsAuthenticated(true);
+    setUserDetails(data); // 🔥 IMPORTANT
   };
 
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+
     setIsAuthenticated(false);
     setUserDetails(null);
   };

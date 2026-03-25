@@ -4,23 +4,39 @@
 
 /* ---------- PRINT STYLES ---------- */
 @media print {
+
   body {
-    background: white;
+    background: white !important;
   }
 
-  /* Hide buttons & navigation */
-  button,
+  /* 🔥 Hide EVERYTHING */
+  body * {
+    visibility: hidden;
+  }
+
+  /* 🔥 Show ONLY invoice */
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+
+  .print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white !important;
+    padding: 20px;
+  }
+
+  /* Remove unwanted UI */
   .no-print {
     display: none !important;
   }
 
-  /* Remove shadows & spacing */
+  /* Clean look */
   .shadow {
     box-shadow: none !important;
-  }
-
-  .p-6 {
-    padding: 0 !important;
   }
 
   table {
@@ -28,9 +44,14 @@
     width: 100%;
   }
 
-  th,
-  td {
+  th, td {
     border: 1px solid #ddd;
+  }
+
+  /* Remove dark mode */
+  * {
+    color: black !important;
+    background: white !important;
   }
 }
 
@@ -87,4 +108,8 @@
 
 .animate-scaleIn {
   animation: scaleIn 0.2s ease-out forwards;
+}
+
+.input {
+  @apply w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white focus:outline-none focus:border-yellow-400;
 }

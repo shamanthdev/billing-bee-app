@@ -38,3 +38,11 @@ export const cancelBill = (id) => api.put(`/bills/${id}/cancel`);
 
 export const updateBill = (id, payload) =>
   api.put(`/bills/${id}`, payload);
+
+/* ==================== 🔥 PAY BILL (NEW) ==================== */
+export const payBill = async (billId, amount) => {
+  const response = await api.put(`/bills/${billId}/pay`, {
+    amount,
+  });
+  return response.data;
+};

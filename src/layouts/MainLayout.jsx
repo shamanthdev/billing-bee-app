@@ -26,7 +26,7 @@ export default function MainLayout() {
       <Sidebar />
 
       {/* Main Content */}
-      <div className="ml-64 flex-1 min-h-screen bg-gray-50 dark:bg-[#0F172A] transition-colors duration-300">
+      <div className="flex-1 overflow-hidden ml-64 flex-1 min-h-screen bg-gray-50 dark:bg-[#0F172A] transition-colors duration-300">
 
         {/* Top Bar */}
         {/* Top Bar */}

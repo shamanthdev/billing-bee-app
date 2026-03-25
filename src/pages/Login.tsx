@@ -40,8 +40,8 @@ const Login = () => {
       });
 
       // localStorage.setItem("user", JSON.stringify(data));
-      localStorage.setItem("token", data.token);
-      login(data.token);
+      localStorage.setItem("token", data?.token || "");
+      login(data || "");
       navigate("/dashboard", { replace: true });
 
     } catch (err) {

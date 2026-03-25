@@ -8,6 +8,7 @@ import DataTable from "../../common/DataTable";
 import CustomerCreate from "./CreateCustomer";
 import ConfirmModal from "../../common/ConfirmModal";
 import LoadingOverlay from "../../common/LoadingOverlay";
+import { Pencil, Trash2 } from "lucide-react";
 
 /* ---------------- Types ---------------- */
 
@@ -76,7 +77,7 @@ export default function CustomerListPage() {
     } catch (err: any) {
       toast.error(
         err?.response?.data?.message ||
-          "Failed to deactivate customer"
+        "Failed to deactivate customer"
       );
     } finally {
       setLoading(false);
@@ -112,57 +113,52 @@ export default function CustomerListPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden">
-        <DataTable
-          columns={[
-            { label: "Customer Name", align: "left" },
-            { label: "Email", align: "left" },
-            { label: "Phone", align: "left" },
-            { label: "Actions", align: "left" },
-          ]}
-          emptyText="No Customer found"
-        >
-          {customers.map((c) => (
-            <tr
-              key={c.id}
-              className="
-                border-b border-gray-200 dark:border-white/10
-                last:border-b-0
-                hover:bg-gray-50 dark:hover:bg-white/5
-                transition
-              "
-            >
-              <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-200">
-                {c.name}
-              </td>
 
-              <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                {c.email || "-"}
-              </td>
 
-              <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                {c.phone || "-"}
-              </td>
+      <DataTable
+        columns={[
+          { label: "Customer Name", align: "left" },
+          { label: "Email", align: "left" },
+          { label: "Phone", align: "left" },
+          { label: "Actions", align: "center" },
+        ]}
+        emptyText="No Customer found"
+      >
+        {customers.map((c) => (
+          <tr
+            key={c.id}
+            className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition"
+          >
+            <td className="px-5 py-3 font-medium text-gray-900 dark:text-gray-200">
+              {c.name}
+            </td>
 
-              <td className="px-4 py-3 text-sm space-x-4">
-                <button
-                  onClick={() => handleEdit(c)}
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Edit
-                </button>
+            <td className="px-5 py-3 text-gray-600 dark:text-gray-400">
+              {c.email || "-"}
+            </td>
 
-                <button
-                  onClick={() => handleDeactivateClick(c)}
-                  className="text-red-600 dark:text-red-400 hover:underline"
-                >
-                  Deactivate
-                </button>
-              </td>
-            </tr>
-          ))}
-        </DataTable>
-      </div>
+            <td className="px-5 py-3 text-gray-600 dark:text-gray-400">
+              {c.phone || "-"}
+            </td>
+
+            {/* ✅ ICON ACTIONS */}
+            <td className="px-5 py-3 flex justify-center gap-4">
+              <Pencil
+                size={16}
+                className="cursor-pointer text-yellow-600 dark:text-yellow-400 hover:scale-110 transition"
+                onClick={() => handleEdit(c)}
+              />
+
+              <Trash2
+                size={16}
+                className="cursor-pointer text-red-600 dark:text-red-400 hover:scale-110 transition"
+                onClick={() => handleDeactivateClick(c)}
+              />
+            </td>
+          </tr>
+        ))}
+      </DataTable>
+
 
       {/* Create / Edit Drawer */}
       {open && (
