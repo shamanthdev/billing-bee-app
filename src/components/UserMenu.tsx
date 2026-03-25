@@ -5,6 +5,7 @@ const UserMenu = () => {
   const navigate = useNavigate();
   const { userDetails } = useAuth();
   const { logout } = useAuth();
+  console.log("userDetails", userDetails);
 
   const handleLogout = () => {
     logout();

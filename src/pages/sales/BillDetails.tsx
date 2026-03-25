@@ -3,12 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { getBillDetails, cancelBill } from "../../services/BillService";
-
-import ConfirmModal from "../../common/ConfirmModal";
 import PaymentSection from "./payments/PaymentSection";
 import PaymentDetails from "./payments/PaymentDetails";
+import ConfirmModal from "../../common/ConfirmModal";
+import { useAuth } from "../../context/AuthContext";
+import DataTable from "../../common/DataTable";
 
-/* Minimal typing — we refine later */
 interface BillItem {
   productName: string;
   price: number;
@@ -29,22 +29,23 @@ interface Bill {
   discount: number;
   gstAmount: number;
   total: number;
+  paymentType: "PENDING" | "PAID" | "CANCELLED";
 }
 
 export default function BillDetails() {
   const { id } = useParams<{ id: string }>();
+  const { userDetails } = useAuth();
   const navigate = useNavigate();
 
   const [bill, setBill] = useState<Bill | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
 
-  const [showCancelConfirm, setShowCancelConfirm] = useState<boolean>(false);
-  const [cancelLoading, setCancelLoading] = useState<boolean>(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     loadBill();
-    // eslint-disable-next-line
   }, [id]);
 
   const loadBill = async () => {
@@ -52,9 +53,8 @@ export default function BillDetails() {
       setLoading(true);
       const data = await getBillDetails(id);
       setBill(data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load bill details");
-      setBill(null);
     } finally {
       setLoading(false);
     }
@@ -76,199 +76,162 @@ export default function BillDetails() {
     }
   };
 
-  const handlePaymentSuccess = () => {
-    loadBill();
-  };
-
-  if (loading)
-    return (
-      <div className="p-6 min-h-screen bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300">
-        Loading bill details...
-      </div>
-    );
-
-  if (!bill)
-    return (
-      <div className="p-6 min-h-screen bg-white dark:bg-slate-900 text-red-500">
-        Bill not found
-      </div>
-    );
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (!bill) return <div className="p-6 text-red-500">Bill not found</div>;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto min-h-screen bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-200 transition-colors">
+    <div className="bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-white transition-colors duration-300">
 
-      {/* Top Bar */}
-      <div className="flex justify-between items-center mb-8 no-print">
-        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
-          <span
-            onClick={() => navigate("/sales")}
-            className="cursor-pointer hover:text-gray-900 dark:hover:text-white transition"
-          >
-            Sales
-          </span>
-          <span className="mx-2">/</span>
-          <span className="font-medium text-gray-900 dark:text-white">
-            {bill.billNumber}
-          </span>
-        </div>
+      {/* 🔴 TOP BAR */}
+      <div className="flex justify-between mb-6 no-print">
+        <button onClick={() => navigate("/sales")}>← Back</button>
 
-        <div className="flex items-center gap-3">
-          {bill.status === "ACTIVE" && (
+        <div className="flex gap-3">
+          {bill.paymentType !== "PAID" && (
             <>
               <button
-                onClick={() =>
-                  navigate(`/sales/edit-bill/${bill.id}`)
-                }
-                className="px-4 py-2 rounded-md bg-yellow-500 text-white text-sm font-medium hover:bg-yellow-600 transition"
+                onClick={() => navigate(`/sales/edit-bill/${bill.id}`)}
+                className="px-4 py-2 bg-yellow-500 text-white rounded"
               >
-                Edit Bill
+                Edit
               </button>
 
               <button
                 onClick={() => setShowCancelConfirm(true)}
-                className="px-4 py-2 rounded-md border border-red-500 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10 transition"
+                className="px-4 py-2 border border-red-500 text-red-600 rounded"
               >
-                Cancel Bill
+                Cancel
               </button>
             </>
           )}
 
           <button
             onClick={() => window.print()}
-            disabled={bill.status === "CANCELLED"}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition disabled:opacity-40"
+            className="px-4 py-2 bg-blue-600 text-white rounded"
           >
             Print / PDF
           </button>
         </div>
       </div>
 
-      {/* Invoice Header */}
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold mb-2">INVOICE</h1>
-          <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-            <div>
-              Invoice No:{" "}
-              <span className="font-medium text-gray-900 dark:text-white">
-                {bill.billNumber}
-              </span>
-            </div>
-            <div>
-              Date:{" "}
-              {new Date(bill.billDate).toLocaleDateString("en-IN")}
-            </div>
-            <div>
-              Customer:{" "}
-              <span className="font-medium text-gray-900 dark:text-white">
-                {bill.customerName || "—"}
-              </span>
-            </div>
+      {/* 🔥 INVOICE CARD */}
+      <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 text-black dark:text-white p-8 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 print-area">
+
+        {/* HEADER */}
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">
+              {userDetails?.businessName || "Billing Bee"}
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {userDetails?.address || ""}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Phone: {userDetails?.phone || "-"}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              GSTIN: {userDetails?.gstNumber || "-"}
+            </p>
+          </div>
+
+          <div className="text-right">
+            <h2 className="text-xl font-semibold">INVOICE</h2>
+            <p>Bill No: {bill.billNumber}</p>
+            <p>Date: {new Date(bill.billDate).toLocaleDateString()}</p>
+            <p>Customer: {bill.customerName}</p>
+
+            <span className="inline-block mt-2 px-3 py-1 text-sm rounded bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+              {bill.paymentType}
+            </span>
           </div>
         </div>
 
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            bill.status === "CANCELLED"
-              ? "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400"
-              : bill.status === "PAID"
-              ? "bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400"
-              : "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
-          }`}
+        {/* TABLE */}
+        <DataTable
+          noScroll
+          columns={[
+            { label: "Product", align: "left" },
+            { label: "Price", align: "right" },
+            { label: "Qty", align: "center" },
+            { label: "GST %", align: "center" },
+            { label: "GST", align: "right" },
+            { label: "Amount", align: "right" },
+          ]}
+          emptyText="No items found"
         >
-          {bill.status}
-        </span>
-      </div>
-
-      {/* Items Table */}
-      <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 shadow mb-8 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 uppercase text-xs">
-            <tr>
-              <th className="text-left px-4 py-3">Product</th>
-              <th className="text-right px-4 py-3">Price</th>
-              <th className="text-right px-4 py-3">Qty</th>
-              <th className="text-right px-4 py-3">GST %</th>
-              <th className="text-right px-4 py-3">GST</th>
-              <th className="text-right px-4 py-3">Amount</th>
+          {bill.items.map((item, i) => (
+            <tr
+              key={i}
+              className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition"
+            >
+              <td className="px-5 py-3">{item.productName}</td>
+              <td className="px-5 py-3 text-right">₹{item.price}</td>
+              <td className="px-5 py-3 text-center">{item.quantity}</td>
+              <td className="px-5 py-3 text-center">{item.gstPercent}%</td>
+              <td className="px-5 py-3 text-right">₹{item.gstAmount}</td>
+              <td className="px-5 py-3 text-right font-medium">₹{item.lineTotal}</td>
             </tr>
-          </thead>
-          <tbody>
-            {bill.items.map((item, idx) => (
-              <tr
-                key={idx}
-                className="border-t border-gray-200 dark:border-white/10"
-              >
-                <td className="px-4 py-3">{item.productName}</td>
-                <td className="px-4 py-3 text-right">
-                  ₹{item.price.toFixed(2)}
-                </td>
-                <td className="px-4 py-3 text-right">{item.quantity}</td>
-                <td className="px-4 py-3 text-right">{item.gstPercent}%</td>
-                <td className="px-4 py-3 text-right">
-                  ₹{item.gstAmount.toFixed(2)}
-                </td>
-                <td className="px-4 py-3 text-right font-medium">
-                  ₹{item.lineTotal.toFixed(2)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </DataTable>
 
-      {/* Summary + Payment */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 shadow">
-          <div className="p-4 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+        {/* TOTALS */}
+        <div className="mt-6 flex justify-end">
+          <div className="w-64 text-sm space-y-2">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>₹{bill.subtotal.toFixed(2)}</span>
+              <span>₹{bill.subtotal}</span>
             </div>
+
             <div className="flex justify-between">
               <span>Discount</span>
-              <span>- ₹{bill.discount.toFixed(2)}</span>
+              <span>- ₹{bill.discount}</span>
             </div>
+
             <div className="flex justify-between">
               <span>GST</span>
-              <span>₹{bill.gstAmount.toFixed(2)}</span>
+              <span>₹{bill.gstAmount}</span>
             </div>
-          </div>
 
-          <div className="border-t border-gray-200 dark:border-white/10" />
+            <div className="flex justify-between font-bold text-lg mt-2 border-t pt-2">
+              <span>Total</span>
+              <span>₹{bill.total}</span>
+            </div>
 
-          <div className="p-4 flex justify-between items-center bg-gray-50 dark:bg-white/5">
-            <span className="text-base font-semibold">
-              Total Payable
-            </span>
-            <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-              ₹{bill.total.toFixed(2)}
-            </span>
+            {bill.paymentType === "PENDING" && (
+              <div className="flex justify-between text-red-600 font-semibold">
+                <span>Balance</span>
+                <span>₹{bill.total}</span>
+              </div>
+            )}
           </div>
         </div>
 
-        <PaymentDetails billId={bill.id} billStatus={bill.status} />
+        {/* FOOTER */}
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-10">
+          Thank you for your business 🙏
+        </p>
       </div>
 
-      {bill.status === "ACTIVE" && (
-        <PaymentSection
-          bill={bill}
-          onPaymentSuccess={handlePaymentSuccess}
-        />
-      )}
+      {/* PAYMENT SECTION */}
+      <div className="mt-6 no-print">
+        <PaymentDetails billId={bill.id} billStatus={bill.status} />
 
+        {bill.paymentType !== "PAID" && (
+          <PaymentSection bill={bill} onPaymentSuccess={loadBill} />
+        )}
+      </div>
+
+      {/* CONFIRM MODAL */}
       <ConfirmModal
         open={showCancelConfirm}
         title="Cancel Bill"
-        message={`Do you really want to cancel bill ${bill.billNumber}?`}
-        subMessage="This will restore stock and cannot be undone."
+        message={`Cancel bill ${bill.billNumber}?`}
+        subMessage="This action cannot be undone."
         danger
         loading={cancelLoading}
-        confirmText="Yes, Cancel Bill"
+        confirmText="Yes, Cancel"
         onConfirm={handleCancelBill}
-        onCancel={() =>
-          !cancelLoading && setShowCancelConfirm(false)
-        }
+        onCancel={() => setShowCancelConfirm(false)}
       />
     </div>
   );

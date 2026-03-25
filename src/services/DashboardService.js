@@ -7,3 +7,7 @@ export const getSalesDashboard = () =>
 export const getLowStockProducts = () => {
   return api.get("/dashboard/low-stock");
 };
+export const getDashboard = async () => {
+  const res = await api.get("/dashboard/dashboard");
+  return res.data;
+};

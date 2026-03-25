@@ -8,37 +8,47 @@ const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // 🔥 NEW FIELDS
+  const [businessName, setBusinessName] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+  const [gstNumber, setGstNumber] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  if (!name || !email || !password) {
-    setError("All fields are required");
-    return;
-  }
+    if (!name || !email || !password || !businessName || !phone) {
+      setError("Please fill all required fields");
+      return;
+    }
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    await signupUser({
-      name,
-      email,
-      password,
-    });
+      await signupUser({
+        name,
+        email,
+        password,
+        businessName,
+        address,
+        phone,
+        gstNumber,
+      });
 
-    navigate("/");
+      navigate("/login"); // better UX
 
-  } catch (err) {
-    setError("Signup failed");
-  } finally {
-    setLoading(false);
-  }
-};
-
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Signup failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-black to-gray-900 overflow-hidden">
@@ -56,7 +66,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         </h2>
 
         <p className="text-sm text-gray-400 text-center mt-2 mb-8">
-          Start managing your billing today
+          Setup your business to start billing
         </p>
 
         {error && (
@@ -65,14 +75,15 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
 
+          {/* USER DETAILS */}
           <input
             type="text"
             placeholder="Full Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white"
+            className="w-full input"
           />
 
           <input
@@ -80,7 +91,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white"
+            className="w-full input"
           />
 
           <input
@@ -88,13 +99,50 @@ const handleSubmit = async (e: React.FormEvent) => {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white"
+            className="w-full input"
+          />
+
+          {/* 🔥 BUSINESS DETAILS */}
+          <div className="border-t border-white/10 pt-4 text-sm text-gray-400">
+            Business Details
+          </div>
+
+          <input
+            type="text"
+            placeholder="Business Name"
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value)}
+            className="w-full input"
+          />
+
+          <input
+            type="text"
+            placeholder="Address"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className="w-full input"
+          />
+
+          <input
+            type="text"
+            placeholder="Phone Number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full input"
+          />
+
+          <input
+            type="text"
+            placeholder="GST Number (Optional)"
+            value={gstNumber}
+            onChange={(e) => setGstNumber(e.target.value)}
+            className="w-full input"
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-lg font-semibold text-black bg-yellow-400 hover:bg-yellow-500"
+            className="w-full py-3 rounded-lg font-semibold text-black bg-yellow-400 hover:bg-yellow-500 transition"
           >
             {loading ? "Creating account..." : "Sign Up"}
           </button>

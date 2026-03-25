@@ -62,13 +62,13 @@ function App() {
 
           {/* Protected */}
           <Route
-           element={
-    <ProtectedRoute>
-      <MainLayout />
-    </ProtectedRoute>
-  }
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
           >
-            
+
 
             {/* <Route path="/dashboard" element={<SalesDashboard />} /> */}
             <Route path="/dashboard" element={<Dashboard />} />
@@ -79,7 +79,7 @@ function App() {
             <Route path="/sales/edit-bill/:billId" element={<CreateBill />} />
             <Route path="/customers" element={<CustomerListPage />} />
             <Route path="/reports" element={<SalesReport />} />
-            
+
 
           </Route>
 
