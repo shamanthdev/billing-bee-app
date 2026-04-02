@@ -2,7 +2,7 @@ import axios from "axios";
 import { BASE_URL } from "../Config";
 
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: `${BASE_URL}/api`,
 });
 
 export const setupAxiosInterceptors = (showLoader, hideLoader) => {

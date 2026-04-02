@@ -1,1 +1,2 @@
-export const BASE_URL = "https://billing-bee-api.onrender.com/api";
+export const BASE_URL = process.env.REACT_APP_API_URL;
+
