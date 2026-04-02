@@ -1,0 +1,1 @@
+export const BASE_URL = "https://billing-bee-api.onrender.com/api";

@@ -1,7 +1,8 @@
 import axios from "axios";
+import { BASE_URL } from "../Config";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api",
+  baseURL: BASE_URL,
 });
 
 export const setupAxiosInterceptors = (showLoader, hideLoader) => {
