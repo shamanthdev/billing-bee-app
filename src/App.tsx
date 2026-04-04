@@ -8,6 +8,7 @@ import Bills from "./pages/sales/Bills";
 import BillDetails from "./pages/sales/BillDetails";
 import CustomerListPage from "./pages/customer/CustomerListPage";
 import Dashboard from "./pages/dashboard/Dashboard";
+import Settings from "./pages/Settings";
 
 import { LoaderProvider } from "./common/Loader";
 import AxiosLoaderSetup from "./common/AxiosLoaderSetup";
@@ -34,6 +35,7 @@ function App() {
               background: "#0f172a",
               color: "#fff",
               border: "1px solid rgba(255,255,255,0.1)",
+              zIndex: 99999,
             },
           }}
         />
@@ -79,6 +81,7 @@ function App() {
             <Route path="/sales/edit-bill/:billId" element={<CreateBill />} />
             <Route path="/customers" element={<CustomerListPage />} />
             <Route path="/reports" element={<SalesReport />} />
+            <Route path="/settings" element={<Settings />} />
 
 
           </Route>

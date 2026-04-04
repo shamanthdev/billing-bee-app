@@ -46,3 +46,5 @@ export const payBill = async (billId, amount) => {
   });
   return response.data;
 };
+
+export const deleteBill = (id) => api.delete(`/bills/${id}`);

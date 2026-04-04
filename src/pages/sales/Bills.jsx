@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Eye } from "lucide-react";
+import { Edit, Eye, Trash2 } from "lucide-react";
 
-import { getBills } from "../../services/BillService";
+import { getBills, deleteBill } from "../../services/BillService";
 import { dateViewFormating } from "../../helper/helper";
 import DataTable from "../../common/DataTable";
 import LoadingOverlay from "../../common/LoadingOverlay";
+import ConfirmModal from "../../common/ConfirmModal";
 
 export default function Bills() {
   const navigate = useNavigate();
@@ -18,8 +19,10 @@ export default function Bills() {
   const [size, setSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-
   const [search, setSearch] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [billToDelete, setBillToDelete] = useState(null);
 
   useEffect(() => {
     loadBills();
@@ -47,6 +50,25 @@ export default function Bills() {
 
   const startRecord = page * size + 1;
   const endRecord = Math.min((page + 1) * size, totalElements);
+
+  const handleDelete = async () => {
+    if (!billToDelete) return;
+    
+    try {
+      setDeleteLoading(true);
+      await deleteBill(billToDelete.id);
+      toast.success("Bill deleted successfully");
+      setShowDeleteConfirm(false);
+      setBillToDelete(null);
+
+      loadBills(); // refresh list
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete bill");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto relative">
@@ -168,7 +190,7 @@ export default function Bills() {
                 </span>
               </td>
 
-              <td className="px-4 py-4 text-center">
+                <td className="px-5 py-3 flex justify-center gap-4">
                 <button
                   disabled={bill.status === "CANCELLED"}
                   onClick={() => navigate(`/sales/${bill.id}`)}
@@ -180,6 +202,34 @@ export default function Bills() {
                 "
                 >
                   <Eye size={16} />
+               
+                </button>
+                   {/* <button
+                  disabled={bill.status === "CANCELLED"}
+                  onClick={() => navigate(`/sales/${bill.id}`)}
+                  className="
+                  p-2 rounded-md
+                  text-blue-600 dark:text-blue-400
+                  hover:bg-blue-100 dark:hover:bg-blue-500/20
+                  transition disabled:opacity-40
+                "
+                >
+                  <Edit size={16} />
+                </button> */}
+                   <button
+                  
+                  onClick={() => {
+                    setBillToDelete(bill);
+                    setShowDeleteConfirm(true);
+                  }}
+                  className="
+                  p-2 rounded-md
+                  text-red-600 dark:text-red-400
+                  hover:bg-red-100 dark:hover:bg-red-500/20
+                  transition disabled:opacity-40
+                "
+                >
+                  <Trash2 size={16} />
                 </button>
               </td>
             </tr>
@@ -232,6 +282,17 @@ export default function Bills() {
           </div>
         </div>
       </div>
+         {<ConfirmModal
+              open={showDeleteConfirm}
+              title="Delete Bill"
+              message={`Are you sure you want to delete bill ${billToDelete?.billNumber}?`}
+              subMessage={`This action cannot be undone.`}
+              danger
+              loading={deleteLoading}
+              confirmText="Yes, Delete"
+              onConfirm={handleDelete}
+              onCancel={() => setShowDeleteConfirm(false)}
+            />}
     </div>
   );
 }

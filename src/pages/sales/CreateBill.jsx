@@ -33,7 +33,7 @@ export default function CreateSale() {
   const [paymentType, setPaymentType] = useState("PAID");
 
   /* ---------------- Load ---------------- */
-  console.log("CreateSale loaded", products);
+  console.log("CreateSale loaded", billItems);
 
   useEffect(() => {
     loadProducts();

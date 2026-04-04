@@ -213,7 +213,7 @@ export default function ProductFormPanel({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block mb-1 text-gray-600 dark:text-gray-400">
-                Cost Price *
+                Purchase Price *
               </label>
               <input
                 type="number"

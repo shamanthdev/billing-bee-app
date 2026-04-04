@@ -28,7 +28,7 @@ export default function ProductTable({ products, onEdit, onDisable, onView }) {
           key={p.id}
           className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition"
         >
-          <td className="px-5 py-3 font-medium">{p.sku}</td>
+          <td className="px-5 py-3 font-medium whitespace-nowrap">{p.sku}</td>
           <td className="px-5 py-3">{p.name}</td>
 
           <td className="px-5 py-3 text-right text-yellow-600 font-semibold">
@@ -45,7 +45,7 @@ export default function ProductTable({ products, onEdit, onDisable, onView }) {
           </td>
 
           <td className="px-5 py-3 text-center">{p.taxPercent}%</td>
-          <td className="px-5 py-3 text-center">{p.expiryDate}</td>
+          <td className="px-5 py-3 text-center whitespace-nowrap">{p.expiryDate}</td>
 
           <td className="px-5 py-3 flex justify-center gap-4">
             <Eye size={16} className="cursor-pointer hover:text-blue-500" onClick={() => onView(p)} />

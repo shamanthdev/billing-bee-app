@@ -59,7 +59,7 @@ export default function ViewProductPanel({ open, product, onClose }) {
 
           <Divider />
 
-          <Detail label="Cost Price" value={`₹${product.costPrice || 0}`} />
+          <Detail label="Purchase Price" value={`₹${product.costPrice || 0}`} />
 
           <Detail
             label="Selling Price"

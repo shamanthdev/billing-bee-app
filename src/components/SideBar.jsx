@@ -6,6 +6,7 @@ import {
   Users,
   BarChart3,
   CreditCard,
+  Settings,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -58,8 +59,23 @@ export default function Sidebar() {
         })}
       </div>
 
-      {/* Logout */}
+      {/* Settings */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all mb-2
+            ${isActive
+              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+              : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            }`
+          }
+        >
+          <Settings size={18} />
+          Settings
+        </NavLink>
+        
+        {/* Logout */}
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 text-sm text-red-600 dark:text-red-400 hover:opacity-80 transition"
